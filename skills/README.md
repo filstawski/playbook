@@ -1,12 +1,15 @@
 # skills/
 
-Every leaf directory here is one skill: `<skill-name>/SKILL.md`. They're
-grouped into domain folders (currently [`api/`](api/README.md) and
-[`git/`](git/README.md)) purely for navigation inside this repo — grouping
-has no effect on how a skill gets reused elsewhere, since reuse always
-symlinks one leaf skill directory by name (see
+Every leaf directory here is one skill: `<skill-name>/SKILL.md`. Most are
+grouped into domain folders ([`api/`](api/README.md),
+[`sdk/`](sdk/README.md), [`git/`](git/README.md), [`docs/`](docs/README.md))
+purely for navigation inside this repo — grouping has no effect on how a
+skill gets reused elsewhere, since reuse always symlinks one leaf skill
+directory by name (see
 [Using this in another project](../README.md#using-this-in-another-project)
 in the root README), regardless of how deep it lives in this source tree.
+A skill with no obvious domain yet (only one of its kind so far) sits
+directly under `skills/` — see [Growth](../CONCEPT.md#growth) in CONCEPT.md.
 
 Start a new skill from [`../templates/SKILL.md`](../templates/SKILL.md) —
 see the root [README.md](../README.md) and [CONCEPT.md](../CONCEPT.md) for
@@ -18,8 +21,20 @@ another project.
 - **[api/](api/README.md)** — backend API style: framework/library choices,
   file-based routing, and the declarative manager pattern for business
   logic. 7 skills across `stack/`, `routing/`, and `managers/`.
+- **[sdk/](sdk/README.md)** — client SDK style: generated-client stack, the
+  structure/manager/sub-manager layering, naming and file-layout
+  conventions. 6 skills across `stack/`, `managers/`, and `conventions/`.
 - **[git/](git/README.md)** — when a commit should happen and how it's
   worded. 2 skills.
+- **[docs/](docs/README.md)** — how to write the documents around code:
+  planning specs, agent/team handoffs, roadmap notes, migration-status
+  tracking, informal-to-formal guideline writeups. 5 skills.
+
+**Ungrouped** (one of a kind so far, not yet worth a domain folder):
+
+- **[same-import-upgrade-path](same-import-upgrade-path/SKILL.md)** — shape
+  a deliberately minimal implementation's public API like the known "real"
+  backing you'll swap in later, so the upgrade is a same-import swap.
 
 (More domains land here as they come up — likely candidates: `testing/`,
 `ai-collaboration/`. Each gets its own folder and `README.md` following
@@ -36,8 +51,20 @@ the same shape as `api/`.)
 | [api-manager-base](api/managers/api-manager-base/SKILL.md) | api / managers | architecture |
 | [api-manager-declarative-config](api/managers/api-manager-declarative-config/SKILL.md) | api / managers | architecture |
 | [api-manager-effects-and-populators](api/managers/api-manager-effects-and-populators/SKILL.md) | api / managers | architecture |
+| [sdk-client-stack](sdk/stack/sdk-client-stack/SKILL.md) | sdk / stack | tooling |
+| [sdk-manager-layers](sdk/managers/sdk-manager-layers/SKILL.md) | sdk / managers | architecture |
+| [sdk-resolvable-ids](sdk/managers/sdk-resolvable-ids/SKILL.md) | sdk / managers | architecture |
+| [sdk-cache-update-placement](sdk/managers/sdk-cache-update-placement/SKILL.md) | sdk / managers | architecture |
+| [sdk-naming-conventions](sdk/conventions/sdk-naming-conventions/SKILL.md) | sdk / conventions | architecture |
+| [sdk-file-section-order](sdk/conventions/sdk-file-section-order/SKILL.md) | sdk / conventions | architecture |
 | [git-commit-requires-approval](git/git-commit-requires-approval/SKILL.md) | git | ai-collaboration |
 | [git-commit-messages](git/git-commit-messages/SKILL.md) | git | git |
+| [docs-feature-planning-spec](docs/docs-feature-planning-spec/SKILL.md) | docs | documentation |
+| [docs-agent-handoff-spec](docs/docs-agent-handoff-spec/SKILL.md) | docs | documentation |
+| [docs-roadmap-notes](docs/docs-roadmap-notes/SKILL.md) | docs | documentation |
+| [docs-migration-status-tracking](docs/docs-migration-status-tracking/SKILL.md) | docs | documentation |
+| [docs-informal-to-formal-guidelines](docs/docs-informal-to-formal-guidelines/SKILL.md) | docs | documentation |
+| [same-import-upgrade-path](same-import-upgrade-path/SKILL.md) | (ungrouped) | architecture |
 
 (This file is named `README.md`, not `SKILL.md`, on purpose — so it isn't
 picked up as a skill itself if this whole directory gets symlinked in. Same
