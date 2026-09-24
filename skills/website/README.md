@@ -10,7 +10,7 @@ One subfolder so far, grouped by framework:
 
 | Folder | Covers |
 | --- | --- |
-| [nextjs](nextjs/README.md) | Next.js dashboard-style apps (product UI behind auth) |
+| [nextjs](nextjs/README.md) | Next.js product apps behind auth — both a thin client over an external SDK (`dashboard`) and a full-stack app that owns its own backend (`fullstack`) |
 
 A future `astro/` folder (or a `nextjs/` marketing-site sub-theme) is where
 normal, mostly-static web pages will get their own skills — **deliberately

@@ -30,9 +30,10 @@ another project.
   planning specs, agent/team handoffs, roadmap notes, migration-status
   tracking, informal-to-formal guideline writeups. 5 skills.
 - **[website/](website/README.md)** — how websites get built, split by
-  framework and by site kind: currently `nextjs/`, and within that, a
-  logged-in dashboard app specifically (stack, folder structure, forms). 4
-  skills.
+  framework and by site kind: currently `nextjs/`, covering both a
+  thin-client dashboard over an external SDK (`dashboard`) and a full-stack
+  app that owns its own backend via Prisma + Server Actions (`fullstack`).
+  9 skills.
 
 **Ungrouped** (one of a kind so far, not yet worth a domain folder):
 
@@ -72,6 +73,11 @@ the same shape as `api/`.)
 | [website-nextjs-dashboard-project-structure](website/nextjs/website-nextjs-dashboard-project-structure/SKILL.md) | website / nextjs | architecture |
 | [website-nextjs-dashboard-route-organization](website/nextjs/website-nextjs-dashboard-route-organization/SKILL.md) | website / nextjs | architecture |
 | [website-nextjs-dashboard-forms](website/nextjs/website-nextjs-dashboard-forms/SKILL.md) | website / nextjs | architecture |
+| [website-nextjs-fullstack-layered-architecture](website/nextjs/website-nextjs-fullstack-layered-architecture/SKILL.md) | website / nextjs | architecture |
+| [website-nextjs-fullstack-server-actions](website/nextjs/website-nextjs-fullstack-server-actions/SKILL.md) | website / nextjs | architecture |
+| [website-nextjs-fullstack-rbac](website/nextjs/website-nextjs-fullstack-rbac/SKILL.md) | website / nextjs | architecture |
+| [website-nextjs-fullstack-list-page-pattern](website/nextjs/website-nextjs-fullstack-list-page-pattern/SKILL.md) | website / nextjs | architecture |
+| [website-nextjs-fullstack-soft-delete-lifecycle](website/nextjs/website-nextjs-fullstack-soft-delete-lifecycle/SKILL.md) | website / nextjs | architecture |
 | [same-import-upgrade-path](same-import-upgrade-path/SKILL.md) | (ungrouped) | architecture |
 
 (This file is named `README.md`, not `SKILL.md`, on purpose — so it isn't
