@@ -29,6 +29,10 @@ another project.
 - **[docs/](docs/README.md)** — how to write the documents around code:
   planning specs, agent/team handoffs, roadmap notes, migration-status
   tracking, informal-to-formal guideline writeups. 5 skills.
+- **[website/](website/README.md)** — how websites get built, split by
+  framework and by site kind: currently `nextjs/`, and within that, a
+  logged-in dashboard app specifically (stack, folder structure, forms). 4
+  skills.
 
 **Ungrouped** (one of a kind so far, not yet worth a domain folder):
 
@@ -64,6 +68,10 @@ the same shape as `api/`.)
 | [docs-roadmap-notes](docs/docs-roadmap-notes/SKILL.md) | docs | documentation |
 | [docs-migration-status-tracking](docs/docs-migration-status-tracking/SKILL.md) | docs | documentation |
 | [docs-informal-to-formal-guidelines](docs/docs-informal-to-formal-guidelines/SKILL.md) | docs | documentation |
+| [website-nextjs-dashboard-stack](website/nextjs/website-nextjs-dashboard-stack/SKILL.md) | website / nextjs | tooling |
+| [website-nextjs-dashboard-project-structure](website/nextjs/website-nextjs-dashboard-project-structure/SKILL.md) | website / nextjs | architecture |
+| [website-nextjs-dashboard-route-organization](website/nextjs/website-nextjs-dashboard-route-organization/SKILL.md) | website / nextjs | architecture |
+| [website-nextjs-dashboard-forms](website/nextjs/website-nextjs-dashboard-forms/SKILL.md) | website / nextjs | architecture |
 | [same-import-upgrade-path](same-import-upgrade-path/SKILL.md) | (ungrouped) | architecture |
 
 (This file is named `README.md`, not `SKILL.md`, on purpose — so it isn't
