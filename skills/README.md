@@ -40,6 +40,10 @@ another project.
 - **[same-import-upgrade-path](same-import-upgrade-path/SKILL.md)** — shape
   a deliberately minimal implementation's public API like the known "real"
   backing you'll swap in later, so the upgrade is a same-import swap.
+- **[code-polish](code-polish/SKILL.md)** — pre-commit cleanup of the
+  current diff: strip iteration debris, replace symptom patches with the
+  root-cause fix, then clean, document, and verify — behavior-preserving,
+  scoped to the change, never commits.
 
 (More domains land here as they come up — likely candidates: `testing/`,
 `ai-collaboration/`. Each gets its own folder and `README.md` following
@@ -79,6 +83,7 @@ the same shape as `api/`.)
 | [website-nextjs-fullstack-list-page-pattern](website/nextjs/website-nextjs-fullstack-list-page-pattern/SKILL.md) | website / nextjs | architecture |
 | [website-nextjs-fullstack-soft-delete-lifecycle](website/nextjs/website-nextjs-fullstack-soft-delete-lifecycle/SKILL.md) | website / nextjs | architecture |
 | [same-import-upgrade-path](same-import-upgrade-path/SKILL.md) | (ungrouped) | architecture |
+| [code-polish](code-polish/SKILL.md) | (ungrouped) | ai-collaboration |
 
 (This file is named `README.md`, not `SKILL.md`, on purpose — so it isn't
 picked up as a skill itself if this whole directory gets symlinked in. Same
