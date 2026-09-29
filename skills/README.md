@@ -40,6 +40,12 @@ another project.
 - **[same-import-upgrade-path](same-import-upgrade-path/SKILL.md)** — shape
   a deliberately minimal implementation's public API like the known "real"
   backing you'll swap in later, so the upgrade is a same-import swap.
+- **[extract-reusable-primitives](extract-reusable-primitives/SKILL.md)** —
+  hunt for reusable practices — near-duplicate
+  functions/methods/classes/hooks/components, repeated parameter
+  bundles, general mechanics later work will need — and extract one
+  properly designed primitive so future call sites and future fixes go
+  through a single place. Write-time and polish.
 - **[code-polish](code-polish/SKILL.md)** — pre-commit cleanup of the
   current diff: strip iteration debris, replace symptom patches with the
   root-cause fix, then clean, document, and verify — behavior-preserving,
@@ -83,6 +89,7 @@ the same shape as `api/`.)
 | [website-nextjs-fullstack-list-page-pattern](website/nextjs/website-nextjs-fullstack-list-page-pattern/SKILL.md) | website / nextjs | architecture |
 | [website-nextjs-fullstack-soft-delete-lifecycle](website/nextjs/website-nextjs-fullstack-soft-delete-lifecycle/SKILL.md) | website / nextjs | architecture |
 | [same-import-upgrade-path](same-import-upgrade-path/SKILL.md) | (ungrouped) | architecture |
+| [extract-reusable-primitives](extract-reusable-primitives/SKILL.md) | (ungrouped) | architecture |
 | [code-polish](code-polish/SKILL.md) | (ungrouped) | ai-collaboration |
 
 (This file is named `README.md`, not `SKILL.md`, on purpose — so it isn't

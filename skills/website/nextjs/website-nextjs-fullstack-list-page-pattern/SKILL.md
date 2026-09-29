@@ -198,6 +198,7 @@ would.
 
 ## See also
 
+- [extract-reusable-primitives](../../../extract-reusable-primitives/SKILL.md) — the `SortableHeader` extraction above is this rule applied: a second near-identical copy is the trigger to build one parameterized primitive.
 - [website-nextjs-fullstack-layered-architecture](../website-nextjs-fullstack-layered-architecture/SKILL.md) — the `queries.ts` list function this page's parsed params feed into.
 - [website-nextjs-fullstack-server-actions](../website-nextjs-fullstack-server-actions/SKILL.md) — how a row's delete/restore action is called and how the page refreshes afterward.
 - [website-nextjs-fullstack-soft-delete-lifecycle](../website-nextjs-fullstack-soft-delete-lifecycle/SKILL.md) — the trash/restore/purge views that pair with a list page's delete action.

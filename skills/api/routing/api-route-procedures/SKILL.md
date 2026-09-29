@@ -185,5 +185,6 @@ re-typed wrong — in every handler that touches that resource.
 
 ## See also
 
+- [extract-reusable-primitives](../../../extract-reusable-primitives/SKILL.md) — the general form of "give a procedure a typed `.config()` instead of writing `postProcedureAnyOwner` / `postProcedureOwnerOnly`": one parameterized primitive, not near-duplicate copies that will drift.
 - [api-route-structure](../api-route-structure/SKILL.md) — how a procedure attaches to a route file via `.procedure(...)`.
 - [api-manager-base](../../managers/api-manager-base/SKILL.md) — a procedure typically calls a manager's `fetch` to resolve the row it guards.

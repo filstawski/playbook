@@ -315,16 +315,34 @@ like `// step 2: now validate`, the steps are probably functions. But
 don't split a clear 25-line function into five 5-line ones just to hit a
 size number; split when a piece has a name worth giving it.
 
-**Reuse what exists.** Before keeping any new helper the change added,
-search for an existing one that does the same thing:
+**Near-duplicates and reusable practices — hunt, then extract one
+primitive.** This is a search, not a "if you happen to notice" check.
+For every function, method, class, hook, or component the change
+added, *and* for any pair of similar ones already sitting in the same
+diff, grep the rest of the diff and the rest of the repo for a
+structural sibling: same operation on a different type, same
+parameter bundle re-threaded through several functions, same steps in
+the same order. Also ask whether what the change introduced is a
+*practice later work will need* (a general mechanic, not a one-off
+tied to this screen) — leaving a narrow helper that the next similar
+feature will fork is a future duplicate. Follow
+[extract-reusable-primitives](../extract-reusable-primitives/SKILL.md).
 
 ```sh
 git grep -nE 'function (format|parse|to)Date|formatDate|toISODate'
 ```
 
-A new `formatDate` next to an existing `formatDate` in `utils/` is
-duplication the next person has to reconcile. Use the existing one; if it
-doesn't quite fit, extend it rather than forking it.
+If you can name the second copy, or the logic is a general practice
+this codebase will keep doing, don't keep the narrow form. Fold into
+one parameterized primitive — or extend the existing helper so later
+call sites can use it — before the commit. That's the version a
+careful engineer would have written on the first try; two near-copies
+(or a one-off that the next feature will have to fork) in a
+"polished" diff are still debris.
+
+Scope still holds: only practices this change introduced or touched.
+Pre-existing near-duplicates the diff never went near stay out of
+scope — mention them in the report, don't start a repo-wide DRY pass.
 
 **Error handling** — errors are either handled meaningfully or
 propagated, never silenced:
@@ -452,8 +470,9 @@ Do:
 - Take dependencies as parameters rather than reaching into globals when
   that's the project's existing pattern.
 - Put a helper in the shared location (`lib/`, `utils/`, the relevant
-  module) if it's clearly general and a second caller exists or is part of
-  this change.
+  module) if it's a practice later work will need, or a second caller
+  exists / is part of this change. The hunt for those practices is
+  Step 4; this step is the brake on unused machinery.
 - Export types that callers will need.
 
 Don't:
@@ -463,8 +482,10 @@ Don't:
   plugin system for one plugin.
 - Extract a helper used exactly once just to make a function shorter,
   unless the name genuinely clarifies.
-- Generalize on the first occurrence. Rule of three: duplicate once,
-  abstract on the third.
+- Invent a framework for a call site that doesn't exist. A real
+  practice this change introduced — something later work will need, or
+  a second copy you can point at — is Step 4, not "speculation" to
+  leave as a narrow one-off.
 
 ```ts
 // over-engineered for one caller
@@ -644,5 +665,6 @@ change, and it would stop being a cleanup step.
 
 ## See also
 
+- [extract-reusable-primitives](../extract-reusable-primitives/SKILL.md) — Step 4 hunts the change for reusable practices (near-duplicates, repeated parameter bundles, general mechanics later work will need) and extracts a primitive the future can call; Step 6 still forbids speculative frameworks for a single caller.
 - [git-commit-requires-approval](../git/git-commit-requires-approval/SKILL.md) — polish ends at "ready for review"; the commit is a separate, explicitly requested step.
 - [git-commit-messages](../git/git-commit-messages/SKILL.md) — the format for the commit that follows a polish pass.

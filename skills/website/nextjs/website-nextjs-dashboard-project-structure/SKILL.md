@@ -274,5 +274,6 @@ exactly the kind of file nobody wants to open, read, or safely edit.
 
 ## See also
 
+- [extract-reusable-primitives](../../../extract-reusable-primitives/SKILL.md) — whether to extract a shared primitive at all (search first; one parameterized form instead of another near-duplicate). This skill is only where the file goes once you've decided to pull it out.
 - [website-nextjs-dashboard-route-organization](../website-nextjs-dashboard-route-organization/SKILL.md) — the route-private counterpart to this file's top-level layers (`_components`/`_hooks`/`_lib`), and route groups.
 - [website-nextjs-dashboard-stack](../website-nextjs-dashboard-stack/SKILL.md) — how the `components/ui/` primitives themselves are built (CVA + Radix).

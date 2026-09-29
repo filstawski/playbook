@@ -177,7 +177,15 @@ the same code — not preemptively "in case something else needs this
 later." Promoting too early produces shared code with exactly one caller
 and speculative flexibility nobody asked for; promoting too late produces
 copy-pasted near-duplicates across routes. The trigger is always the
-second real caller, not a guess about a future one.
+second real caller, not a guess about a future one. If that second
+caller is being written in this same pass — two routes, two near-copies
+— extract one primitive now rather than landing a duplicate in each
+route's private folder; see
+[extract-reusable-primitives](../../../extract-reusable-primitives/SKILL.md).
+Which folder the extracted file lives in is still this promotion rule
+(shared vs route-private) plus
+[website-nextjs-dashboard-project-structure](../website-nextjs-dashboard-project-structure/SKILL.md)
+(which shared folder).
 
 ### Colocating page-level data hooks
 
@@ -234,5 +242,6 @@ directory operation instead of a repo-wide hunt for orphaned files.
 
 ## See also
 
+- [extract-reusable-primitives](../../../extract-reusable-primitives/SKILL.md) — search for (or notice you're about to write) a near-duplicate before adding another copy; this skill is only the private-vs-shared *location* once you've decided to extract.
 - [website-nextjs-dashboard-project-structure](../website-nextjs-dashboard-project-structure/SKILL.md) — the shared-tier side of this same boundary (`components/ui`, `components/<feature>`, `hooks/`, `lib/`).
 - [website-nextjs-dashboard-stack](../website-nextjs-dashboard-stack/SKILL.md) — the framework/library choices these routes are built on top of.
