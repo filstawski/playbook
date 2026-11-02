@@ -1,0 +1,153 @@
+# Every pull request runs the full check, and every push to main the quick one, as the image's run
+# (and any end-to-end tests) passed on its PR. Each job is a check of its own on the PR, run side by
+# side. The secret scan is a workflow of its own (secret-scan.yml), as it reads prose too.
+#
+# Written for GitHub's runners and safe on self-hosted ones, which keep what a run leaves: the
+# image's run names its image and containers after the run, reaches the app inside its own network
+# rather than through a port on the machine, and removes all of it at the end.
+name: CI
+
+# Prose changes nothing that's built or tested: a change of nothing else runs no check.
+on:
+  pull_request:
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+  push:
+    branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+  # main's quick check by hand, for a push GitHub lost and ran nothing for.
+  workflow_dispatch:
+
+# A newer push to the same branch cancels the run it replaces.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    # The build on main only: on a pull request the image builds the app already.
+    name: Format, lint, types, unit tests${{ github.event_name != 'pull_request' && ', build' || '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - if: github.event_name != 'pull_request'
+        run: npm run build
+
+  # End-to-end tests (Playwright against the standalone server, on a Postgres service of their own,
+  # migrated and seeded from empty) go here as a pull-request-only job.
+
+  docker:
+    name: Docker image builds and runs
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # An empty database, as a new server's, reached by its name on the network the run makes for it.
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: ci-password
+          POSTGRES_DB: app
+        options: >-
+          --health-cmd "pg_isready -U app -d app"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      RUN: ci-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v7
+      # On self-hosted runners, a named builder that's kept between runs (`name:`, `cleanup: false`)
+      # holds the layer cache on the machine instead: fetching and storing it through GitHub took
+      # most of a build's time there.
+      - uses: docker/setup-buildx-action@v4
+      # Built but not pushed: the Release workflow publishes main's.
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: false
+          load: true
+          tags: app-ci:${{ env.RUN }}
+          # The commit, as the Release workflow passes it, so the run can check the image knows it.
+          build-args: |
+            BUILD_COMMIT=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      # The image as a server runs it (deploy/compose.yaml): the migrations, then the app (and the
+      # worker, where the image has one) answering healthy as this commit. The app is asked from
+      # inside its own network, at the localhost it has as its address, so it needs no port.
+      - name: Run the image
+        shell: bash
+        env:
+          NETWORK: ${{ job.services.postgres.network }}
+        run: |
+          # The database's password is no secret: it lives for this run, on its network only.
+          {
+            echo "DATABASE_URL=postgresql://app:ci-password@postgres:5432/app" # trufflehog:ignore
+            echo "AUTH_SECRET=$(openssl rand -base64 32)"
+            echo "APP_URL=http://localhost:3000"
+          } > "$RUNNER_TEMP/image.env"
+          image=app-ci:$RUN
+          in_network() { docker run --network "$NETWORK" --env-file "$RUNNER_TEMP/image.env" "$@"; }
+          get() { docker run --rm --network "container:$RUN-app" curlimages/curl:8.16.0 -fsS -m 5 "$@"; }
+          in_network --rm "$image" node migrate.mjs
+          in_network -d --name "$RUN-app" "$image"
+          worker=false
+          if in_network --rm "$image" test -f worker.mjs; then
+            in_network -d --name "$RUN-worker" "$image" node worker.mjs
+            worker=true
+          fi
+          healthy() {
+            local answer
+            answer=$(get localhost:3000/api/health) || return 1
+            [[ $answer == *'"database":"ok"'* && $answer == *"\"build\":\"$GITHUB_SHA\""* ]] || return 1
+            [[ $worker == false || $answer == *'"worker":"ok"'* ]]
+          }
+          for _ in $(seq 30); do
+            healthy && break
+            sleep 2
+          done
+          get localhost:3000/api/health >&2 || true
+          healthy
+          # What a server takes from the image to run it (deploy/deploy.sh).
+          in_network --rm "$image" sh -c 'test -x deploy/deploy.sh && test -f deploy/compose.yaml && test -f deploy/nginx/site.conf'
+      - name: The image's logs
+        if: failure()
+        run: |
+          docker logs "$RUN-app" || true
+          docker logs "$RUN-worker" || true
+      # Before the run takes its network down, which it can't while the containers are on it.
+      - name: Remove the image and its containers
+        if: always()
+        run: |
+          docker rm -f "$RUN-app" "$RUN-worker" || true
+          docker image rm "app-ci:$RUN" || true
+
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      # What ships only: dev tooling's findings come through Dependabot's alerts instead.
+      - run: npm audit --audit-level=high --omit=dev

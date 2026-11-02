@@ -1,0 +1,142 @@
+# Every commit on main: its image to GHCR, then to staging. Production takes it from the Deploy
+# workflow, started by a person. A commit that changes nothing the image is built from takes the
+# image of the commit before under its own name, so a deploy can still name it, and nothing is built
+# or deployed.
+name: Release
+
+on:
+  push:
+    branches: [main]
+  # main's newest commit by hand, for a push GitHub lost and ran nothing for: without the commit
+  # before to compare with, it's built.
+  workflow_dispatch:
+
+# One after the other, so staging ends on the newest commit. (GitHub keeps one run waiting per group:
+# a third merge while one runs replaces the second's waiting run, whose commit then has no image.)
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  # Lowercase, as GHCR wants it: `ghcr.io/${{ github.repository }}` only where the names are.
+  IMAGE: ghcr.io/<ORG>/<APP>
+
+jobs:
+  changes:
+    name: What the image is built from
+    # By hand from main only: an image of another branch would be named main and go to staging.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      build: ${{ steps.diff.outputs.build }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      # What .dockerignore leaves out of the build context changes nothing in the image (keep the
+      # list in step with it). Built whenever the commit before can't be found to compare with.
+      - id: diff
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if git cat-file -e "$BEFORE^{commit}" 2>/dev/null &&
+            git diff --quiet "$BEFORE" HEAD -- . ':!docs' ':!*.md' ':!.github' ':!e2e' ':!playwright.config.ts'; then
+            echo "build=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  # The image of the commit before, under this one's name too: the same files make the same image.
+  # Its BUILD_COMMIT stays the commit before's, which deploy.sh reads from the image itself.
+  tag:
+    name: Name the image after this commit
+    needs: changes
+    if: needs.changes.outputs.build == 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - env:
+          BEFORE: ${{ github.event.before }}
+        run: docker buildx imagetools create --tag "$IMAGE:$GITHUB_SHA" "$IMAGE:$BEFORE"
+
+  publish:
+    name: Publish the image
+    needs: changes
+    if: needs.changes.outputs.build == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      # The build checks the types itself, as what it publishes reaches staging whatever main's
+      # check says.
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ github.sha }}
+            ${{ env.IMAGE }}:main
+          # Public build-time settings go here too (NEXT_PUBLIC_*, from repository variables).
+          build-args: |
+            BUILD_COMMIT=${{ github.sha }}
+          # A token the build uses but the image must not keep, as a BuildKit secret (Dockerfile).
+          # Until the secret exists, the build runs without it.
+          secrets: |
+            sentry_auth_token=${{ secrets.SENTRY_AUTH_TOKEN }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          # One package version per commit, no attestations beside it: the retention counts them.
+          provenance: false
+          sbom: false
+
+  # Once there's a server to deploy to: the repository variable DEPLOY_HOST names it.
+  staging:
+    name: Staging
+    needs: publish
+    if: vars.DEPLOY_HOST != ''
+    # What the Deploy workflow's job takes: recording its deployment.
+    permissions:
+      deployments: write
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: staging
+      commit: ${{ github.sha }}
+    secrets: inherit
+
+  # GHCR keeps the newest five images, within GitHub Free's package storage. The server keeps its
+  # own five besides (deploy/deploy.sh), so a rollback to one of those needs nothing from here.
+  retention:
+    name: Keep five images
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      packages: write
+    steps:
+      - uses: actions/delete-package-versions@v5
+        with:
+          package-name: <APP>
+          package-type: container
+          min-versions-to-keep: 5

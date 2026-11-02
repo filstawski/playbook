@@ -1,0 +1,28 @@
+# Only what `npm ci` and `next build` need goes into the build context, plus deploy/, which the image
+# carries for the server (Dockerfile): never ignore deploy/. A commit to main that changes nothing
+# else reuses the image of the commit before (.github/workflows/release.yml, whose list of paths
+# follows this file: keep the two in step).
+.git
+.github
+.next
+node_modules
+docs
+# Editors' and agents' folders.
+.vscode
+.idea
+.agents
+.claude
+.cursor
+# The end-to-end tests and their runner's config, which imports them: `next build` type-checks every
+# TypeScript file in the context, so a config left in whose imports were left out fails the build.
+e2e
+playwright.config.ts
+coverage
+test-results
+playwright-report
+blob-report
+# Prose, at any depth (a bare *.md matches the root only). Drop this if the app imports Markdown.
+**/*.md
+.env*
+Dockerfile
+.dockerignore
