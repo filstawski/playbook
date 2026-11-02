@@ -20,9 +20,22 @@ repeat.
 - Writing a practice down forces me to check whether it's actually true, or
   just a habit.
 
+## Start here
+
+[INDEX.md](INDEX.md) maps everything: the guidelines in twelve categories,
+the skills, what to read for which task, and the drop-in agent snippet.
+[OPEN_QUESTIONS.md](OPEN_QUESTIONS.md) lists what is still undecided.
+
 ## Structure
 
-See [CONCEPT.md](CONCEPT.md) for the full rationale. Short version:
+See [CONCEPT.md](CONCEPT.md) for the full rationale. Since the 2026-11
+consolidation there are two layers:
+
+- `guidelines/<category>/` holds short rules, grouped into the twelve
+  categories.
+- `skills/` holds deep, invocable practices, as before.
+
+Short version of the skills layout:
 
 ```
 skills/
@@ -50,6 +63,24 @@ always symlinks one leaf `<skill-name>/` directory — see below — so
 `skills/api-manager-base/` behave identically once linked.
 
 ## Using this in another project
+
+**What every project actually does (since September 2026):** install skills
+with the `skills` CLI, vendored into the repo and committed, with a
+lockfile:
+
+```sh
+npx skills add filstawski/playbook --skill code-polish --skill git-commit-messages
+ln -s ../.agents/skills .claude/skills
+git add .agents/skills .claude/skills skills-lock.json
+```
+
+Then paste [snippets/AGENTS.md](snippets/AGENTS.md) into the project's
+`AGENTS.md`, so agents find the guidelines and the top rules too. Details,
+and the typical skill set per kind of project, are in
+[skills/README.md](skills/README.md#installing-skills-in-a-project).
+
+The symlink options below still work for a local, always-live link to this
+clone:
 
 1. **Global, all projects:**
    ```sh
