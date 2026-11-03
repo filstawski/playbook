@@ -22,9 +22,10 @@ repeat.
 
 ## Start here
 
-[INDEX.md](INDEX.md) maps everything: the guidelines in twelve categories,
+[INDEX.md](INDEX.md) maps everything: the guidelines in thirteen categories,
 the skills, what to read for which task, and the drop-in agent snippet.
-[OPEN_QUESTIONS.md](OPEN_QUESTIONS.md) lists what is still undecided.
+[OPEN_QUESTIONS.md](OPEN_QUESTIONS.md) logs the decisions taken and holds any
+new open question.
 
 ## Structure
 

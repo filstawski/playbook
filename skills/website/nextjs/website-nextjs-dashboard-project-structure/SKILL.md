@@ -42,9 +42,18 @@ still has exactly one job (`constants.ts`, `storage.ts`, `motion.ts`,
 one domain's scoring logic). When a file starts covering two unrelated
 concerns, split it before it grows further, don't keep appending.
 
-### `components/ui/` — generic, domain-unaware design-system primitives
+### `components/ui/` — the component kit's primitives, and nothing else
 
-Everything here must work in a codebase that knows nothing about this
+**Revised 2026-11-03.** `components/ui/` holds only components that come
+from the installed kit (shadcn, on Base UI in newer projects) and direct
+extensions of them, however heavily reworked. A generic primitive you build
+by hand (a bar, a filter menu, an animated-height wrapper) goes flat in
+`components/` instead, even though it is just as domain-unaware. Import the
+headless library only inside `components/ui/`. The user corrected this
+placement repeatedly ("don't use the components/ui folder, this one is
+intended for just shadcn things and maybe extensions, use /components").
+
+Everything here must also work in a codebase that knows nothing about this
 specific product. A component belongs here if you could paste it into a
 different app's `components/ui/` unchanged: `button.tsx`, `card.tsx`,
 `dialog.tsx`, `field.tsx`, `table.tsx`, `skeleton.tsx`. If a component
@@ -81,7 +90,8 @@ and decreasing order of reuse:
 
 | Tier | Location | Domain-aware? | Used from |
 | --- | --- | --- | --- |
-| Design-system primitive | `components/ui/*.tsx` | No | Anywhere |
+| Kit primitive (shadcn and its extensions) | `components/ui/*.tsx` | No | Anywhere |
+| Hand-built generic primitive | `components/*.tsx` | No | Anywhere |
 | Cross-cutting feature group | `components/<feature>/*.tsx` | Yes | Multiple routes |
 | Cross-cutting single file | `components/*.tsx` | Yes | Multiple routes |
 | Route-private | `app/<route>/_components/*.tsx` | Yes | One route only |

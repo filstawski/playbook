@@ -239,8 +239,7 @@ else in the app.
   TanStack Query reads with Server Components. See
   [guidelines/stacks/web-stack.md](../../../../guidelines/stacks/web-stack.md)
   and [guidelines/frontend/components.md](../../../../guidelines/frontend/components.md).
-  Whether to revise this skill in place is in
-  [OPEN_QUESTIONS.md](../../../../OPEN_QUESTIONS.md).
+  This skill stays as the thin-client variant (decided 2026-11-03).
 - Don't reach for `file:` package linking + `transpilePackages` unless a
   sibling package is under active local co-development. Once it's stable,
   publish it (even to a private registry) — resolving raw TypeScript

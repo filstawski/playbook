@@ -2,9 +2,8 @@
 
 How UI components are sourced, placed and kept reusable in React apps. Where
 files go in a dashboard app is detailed in
-[website-nextjs-dashboard-project-structure](../../skills/website/nextjs/website-nextjs-dashboard-project-structure/SKILL.md);
-the entries below override its wording where they differ, because they are
-newer.
+[website-nextjs-dashboard-project-structure](../../skills/website/nextjs/website-nextjs-dashboard-project-structure/SKILL.md),
+which was revised on 2026-11-03 to match the placement rule below.
 
 ## Use the installed component kit first, always
 

@@ -1,9 +1,8 @@
 # Working with agents
 
-> **Flagged as uncategorized.** These rules about how agents should work
-> with the user don't belong to any of the twelve categories, but they are
-> the most repeated rules of all. [OPEN_QUESTIONS.md](../../OPEN_QUESTIONS.md)
-> proposes making this its own category. The playbook's existing
+> **Category 13, added 2026-11-03.** These rules about how agents should
+> work with the user are the most repeated rules of all, so they got a
+> category of their own. The playbook's existing
 > `ai-collaboration` skills ([git-commit-requires-approval](../../skills/git/git-commit-requires-approval/SKILL.md),
 > [code-polish](../../skills/code-polish/SKILL.md)) belong to the same theme.
 

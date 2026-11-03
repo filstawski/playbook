@@ -23,7 +23,8 @@ audit the code.
 (e.g. "for this task you may commit and push without asking" in a reusable
 site-building prompt), and an explicit "deploy it" for changes the user has
 already seen covers committing and pushing them. Without such a grant, the
-rule above holds.
+rule above holds. A fix that only unblocks a preview deploy is no
+exception: ask, and say why it blocks (decided 2026-11-03).
 
 **See also:** [git-commit-requires-approval](../../skills/git/git-commit-requires-approval/SKILL.md)
 

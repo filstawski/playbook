@@ -23,8 +23,9 @@ start from a bare `create-next-app`.
 - **Static.** Every route prerenders, and the build fails if one stops
   being static (`export const ensureStatic = "navigation"` in the root
   layout). Nothing reads cookies, headers or search params.
-- **Private.** No cookies, analytics, embeds or third-party requests (for
-  analytics, see [OPEN_QUESTIONS.md](../../OPEN_QUESTIONS.md) #14). A map
+- **Private.** No cookies, analytics, embeds or third-party requests. No
+  analytics by default; add it only when the user asks for it on that site
+  (see [monitoring and analytics](../external-services/monitoring-and-analytics.md)). A map
   is a plain link, not an iframe. Fonts are self-hosted through `next/font`.
   Anything third-party needs a decision in the concept and its own section
   in the privacy policy before it ships.
@@ -149,3 +150,17 @@ and lockfile when the user only wanted to add the registry.
 
 **See also:** [../stacks/web-stack.md](../stacks/web-stack.md) for the
 rejected effect approaches.
+
+## Improvements flow back into the template
+
+**SHOULD** · 2026-11 · client sites
+
+When a site built from the template gains something every site should have
+(a legal-page detail, an SEO improvement, a check), port it back into the
+template in the same week, so the next site starts with it. The newest
+client site's additions (legal-page descriptions, the consumer-dispute
+statement, the professional-rules link) are to be back-ported on that basis.
+
+**Why:** the template exists so good sites can be produced quickly and
+consistently; one that falls behind its own sites makes every new site
+repeat old fixes. Decided 2026-11-03.

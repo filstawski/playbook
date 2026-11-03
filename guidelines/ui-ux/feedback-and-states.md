@@ -131,3 +131,15 @@ there from the first frame rather than fading or pouring in late. See
 **Why:** a hero graphic appeared about a second after the page and shader
 effects faded in late, which the user called ugly. The fix was asked for
 "not just there, but generally".
+
+## Sound stays unbuilt until asked
+
+**CONSIDER** · 2026-10 · dashboard app
+
+A sound concept exists: few sounds, only for things that arrive while you
+work and for wins; never for clicks, hovers, typing, saves or errors; short,
+quiet and generated with the Web Audio API. Don't build it until the user
+asks.
+
+**Why:** the user asked for it to be written down ("let's write it down for
+now"), and on 2026-11-03 decided to keep it unbuilt.

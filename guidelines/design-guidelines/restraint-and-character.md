@@ -37,8 +37,10 @@ An internal app shares the visual and motion vocabulary of its company's
 website, toned down by about a third for density and long use ("judge every
 effect as if it appears a hundred times on one screen"). The calm app
 profile in [website-motion](../../skills/website/website-motion/SKILL.md) is
-the floor. When toning a design down, keep the full-strength version on a
-branch: the user may want it back. Large shapes and
+the floor. When toning a design down, keep the full-strength version (and any design
+variants) as a local snapshot ref, `refs/snapshots/<name>`: the user may
+want it back. Push it to a branch only when the user asks; no automatic
+commits (decided 2026-11-03). Large shapes and
 things in flow use calm springs, and only small pops may bounce.
 
 ## AI surfaces get their own lively look
@@ -52,8 +54,7 @@ colored border ("I want some nice moving wavy/glowy effects too"). It has two
 intensities: working (brisk) and needs attention (slow and quiet; several
 may coexist). Cap how many animate at once. Continuous motion belongs to AI
 surfaces and the few chrome or signature effects the user asked for, never
-to content objects; don't borrow it for emphasis
-([OPEN_QUESTIONS.md](../../OPEN_QUESTIONS.md) #10).
+to content objects; don't borrow it for emphasis (confirmed 2026-11-03).
 
 **Why:** an AI input with only a colored border looked "too boring" to the
 user. For customer-facing surfaces the user added: "don't overkill it".

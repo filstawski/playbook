@@ -55,6 +55,9 @@ export function Analytics({ consent }: { consent: "accepted" | "rejected" | null
 value needs a rebuild. If no collect requests appear, test without an ad
 blocker before changing code.
 
-**Changed:** in August a site got GA behind a consent banner. In November
-the agent advised launching a site without GA, and the user's decision isn't
-recorded; see [OPEN_QUESTIONS.md](../../OPEN_QUESTIONS.md).
+**Decided 2026-11-03:** no analytics by default. Add it only when the user
+asks for it on that particular site, and then follow this entry
+(consent-free options first; a banner only with the rules above).
+
+**Changed:** in August a site got GA behind a consent banner because the
+user asked for it there; that remains the pattern when asked.

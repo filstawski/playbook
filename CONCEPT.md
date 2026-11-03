@@ -183,10 +183,11 @@ have buried them. They now live in `guidelines/`:
 
 ```
 guidelines/
-  README.md                  # the twelve categories, entry format
+  README.md                  # the thirteen categories, entry format
   <category>/                # ui-ux, design-guidelines, frontend, backend, stacks,
     README.md                # apis, external-services, github, version-control,
-    <topic>.md               # ci-cd, deployment; uncategorized/ for misfits (flagged)
+    <topic>.md               # ci-cd, deployment, working-with-agents;
+                             # uncategorized/ for misfits (flagged)
 ```
 
 - **What an entry is.** A short imperative title; a strength (`MUST`,

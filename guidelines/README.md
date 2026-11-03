@@ -20,6 +20,7 @@ navigation and reading order are in [INDEX.md](../INDEX.md).
 | 10 | CI/CD | [ci-cd/](ci-cd/README.md) |
 | 11 | Deployment | [deployment/](deployment/README.md) |
 | 12 | Skills | [../skills/README.md](../skills/README.md) |
+| 13 | Working with agents (added 2026-11-03) | [working-with-agents/](working-with-agents/README.md) |
 | — | Uncategorized (flagged) | [uncategorized/](uncategorized/README.md) |
 
 ## Entry format

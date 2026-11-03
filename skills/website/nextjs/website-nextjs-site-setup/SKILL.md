@@ -293,15 +293,27 @@ export const businessJsonLd = {
 ```
 
 Add the preview-only `noindex` in `src/proxy.ts` (see
-[deployer guidelines](../../../../guidelines/deployment/deployer.md)), and a
-generated share image in `opengraph-image.tsx`. Never claim ratings,
+[deployer guidelines](../../../../guidelines/deployment/deployer.md)).
+
+The template standard also includes (decided 2026-11-03):
+
+- **Typed JSON-LD.** Type the graph with `schema-dts` (`Graph`), and add a
+  `BreadcrumbList` and a `Service` node on every service page.
+- **`lastModified` from content.** Each `PAGES` entry carries the date its
+  content last changed, and `sitemap.ts` uses it instead of the build time.
+- **A share image per page.** An `opengraph-image.tsx` next to each page
+  that sets its own `openGraph`, plus the root one as the fallback.
+- **`llms.txt` and `security.txt`,** generated from `SITE` and `PAGES` at
+  build time.
+
+Never claim ratings,
 reviews or opening hours nobody confirmed. Titles and descriptions follow
 [marketing-seo-audit](../../../marketing/marketing-seo-audit/SKILL.md).
 
 ### 9. Pages, one at a time
 
 The order: home → services (one page each where there is enough to say,
-named the way customers search) → work and references (only with real
+at the top level `/<service>`, named the way customers search) → work and references (only with real
 photos) → about → contact → legal notice → privacy policy → 404.
 
 Each page gets a title, a unique description and a self-canonical, and is
@@ -422,8 +434,8 @@ pages, placeholder text and phone overflow more than once.
   Single-language sites never get an i18n library.
 - **German legal pages** are written for German businesses. Other
   jurisdictions need their own legal pages.
-- **Production hosting** for client sites isn't settled; previews are
-  Deployer. See [OPEN_QUESTIONS.md](../../../../OPEN_QUESTIONS.md).
+- **Production hosting** is decided per client and recorded in the concept;
+  previews are always Deployer.
 
 ## See also
 

@@ -177,6 +177,8 @@ and merged without another round of questions.
   used.
 - When the user explicitly delegates a release path ("commit, push and do
   the tag stuff"), do the whole path, still with green CI before tagging.
+  The delegation covers that one release; the next one needs a new go
+  (decided 2026-11-03).
 - Repos with branch protection or a merge queue enforce some of this
   themselves; the agreements still apply where they don't.
 

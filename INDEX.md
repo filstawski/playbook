@@ -6,7 +6,7 @@ distilled from real projects. Nothing in it is specific to one project.
 
 ## Read first, whatever the task
 
-1. [guidelines/uncategorized/agent-workflow.md](guidelines/uncategorized/agent-workflow.md)
+1. [guidelines/working-with-agents/agent-workflow.md](guidelines/working-with-agents/agent-workflow.md)
    — how to work with the user. Never touch their dev environment, put
    finished work where they can try it, ask vs act, short answers, verify
    yourself.
@@ -34,7 +34,8 @@ drop into a new project's `AGENTS.md`.
 | 10 | [CI/CD](guidelines/ci-cd/README.md) | [dependencies-and-lockfiles](guidelines/ci-cd/dependencies-and-lockfiles.md), [pipelines](guidelines/ci-cd/pipelines.md) | [deploy-docker-compose-vps](skills/deploy/deploy-docker-compose-vps/SKILL.md) |
 | 11 | [Deployment](guidelines/deployment/README.md) | [deployer](guidelines/deployment/deployer.md), [production-vps](guidelines/deployment/production-vps.md) | [deploy-preview-with-deployer](skills/deploy/deploy-preview-with-deployer/SKILL.md), [deploy-docker-compose-vps](skills/deploy/deploy-docker-compose-vps/SKILL.md) |
 | 12 | [Skills](skills/README.md) | how skills are installed and written; where each came from | all of `skills/` |
-| — | [Uncategorized (flagged)](guidelines/uncategorized/README.md) | [agent-workflow](guidelines/uncategorized/agent-workflow.md), [client-work](guidelines/uncategorized/client-work.md) | [code-polish](skills/code-polish/SKILL.md), [docs/*](skills/docs/README.md) |
+| 13 | [Working with agents](guidelines/working-with-agents/README.md) | [agent-workflow](guidelines/working-with-agents/agent-workflow.md) | [code-polish](skills/code-polish/SKILL.md), [docs/*](skills/docs/README.md), [git-commit-requires-approval](skills/git/git-commit-requires-approval/SKILL.md) |
+| — | [Uncategorized (flagged)](guidelines/uncategorized/README.md) | [client-work](guidelines/uncategorized/client-work.md) | [marketing-copywriting](skills/marketing/marketing-copywriting/SKILL.md) |
 
 ## By task
 
@@ -43,7 +44,7 @@ drop into a new project's `AGENTS.md`.
 | Start a new marketing or client site | [website-nextjs-site-setup](skills/website/nextjs/website-nextjs-site-setup/SKILL.md) → [design-taste](skills/design/design-taste/SKILL.md) → [marketing-copywriting](skills/marketing/marketing-copywriting/SKILL.md) → [marketing-seo-audit](skills/marketing/marketing-seo-audit/SKILL.md) |
 | Start a full-stack dashboard app | [web-stack](guidelines/stacks/web-stack.md) → [website-nextjs-fullstack-layered-architecture](skills/website/nextjs/website-nextjs-fullstack-layered-architecture/SKILL.md) → [backend/](guidelines/backend/README.md) |
 | Build or change UI | [frontend/components](guidelines/frontend/components.md) → [ui-ux/](guidelines/ui-ux/README.md) → [website-motion](skills/website/website-motion/SKILL.md) → [design-interface-polish](skills/design/design-interface-polish/SKILL.md) |
-| Plan a feature | [docs-feature-planning-spec](skills/docs/docs-feature-planning-spec/SKILL.md), [agent-workflow § Concept before code](guidelines/uncategorized/agent-workflow.md) |
+| Plan a feature | [docs-feature-planning-spec](skills/docs/docs-feature-planning-spec/SKILL.md), [agent-workflow § Concept before code](guidelines/working-with-agents/agent-workflow.md) |
 | Get a change ready to commit | [code-polish](skills/code-polish/SKILL.md) → [commits](guidelines/version-control/commits.md) → [git-pull-requests](skills/git/git-pull-requests/SKILL.md) |
 | Show a branch to the user or a client | [deploy-preview-with-deployer](skills/deploy/deploy-preview-with-deployer/SKILL.md) |
 | Set up production | [deploy-docker-compose-vps](skills/deploy/deploy-docker-compose-vps/SKILL.md) |
@@ -54,6 +55,6 @@ drop into a new project's `AGENTS.md`.
 
 - [README.md](README.md) and [CONCEPT.md](CONCEPT.md): what this repository
   is and why it's shaped this way.
-- [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md): what is still undecided. Don't
-  treat those items as rules.
+- [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md): the decision log of the 2026-11
+  consolidation, and where new open questions go.
 - [templates/](templates/): `SKILL.md` and `GUIDELINE.md`, for new entries.

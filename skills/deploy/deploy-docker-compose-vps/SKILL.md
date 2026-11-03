@@ -234,8 +234,7 @@ of production on a GitHub plan that enforces nothing.
 
 - **Previews** use [deploy-preview-with-deployer](../deploy-preview-with-deployer/SKILL.md).
 - **Static marketing sites** need no database, migrations or worker. Their
-  production hosting is a separate decision (see
-  [OPEN_QUESTIONS.md](../../../OPEN_QUESTIONS.md)).
+  production hosting is decided per client, in the site's concept.
 - **Self-hosted runners.** The workflows assume `ubuntu-latest`. On
   self-hosted runners, name every container after the run, clean up in
   `if: always()`, share one persistent BuildKit builder, and cap concurrent

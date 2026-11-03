@@ -2,7 +2,7 @@
 
 Agents build and test in their own git worktrees so the user's checkout, dev
 server and database stay untouched (see
-[../uncategorized/agent-workflow.md](../uncategorized/agent-workflow.md)).
+[../working-with-agents/agent-workflow.md](../working-with-agents/agent-workflow.md)).
 These are the rules and pitfalls that came out of doing that daily.
 
 ## Build and test in a scratch worktree, review in the user's checkout

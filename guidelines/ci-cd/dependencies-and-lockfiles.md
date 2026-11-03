@@ -42,8 +42,7 @@ again, and only if the user does.
 
 ## Security updates: a patched release that has aged two weeks
 
-**CONSIDER** · 2026-11 · company website · unconfirmed as a standing rule
-([OPEN_QUESTIONS.md](../../OPEN_QUESTIONS.md) #22)
+**SHOULD** · 2026-11 · company website · confirmed as a standing rule 2026-11-03
 
 For an advisory, pick the newest release that fixes it and has been out for
 at least two weeks (`npm install <pkg>@<version> --before=<date>`). Never use

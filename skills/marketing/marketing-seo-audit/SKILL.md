@@ -14,9 +14,8 @@ metadata:
 
 ## Rule
 
-The sites are static, server-rendered, cookie-free and, unless decided otherwise
-([OPEN_QUESTIONS.md](../../../OPEN_QUESTIONS.md) #14), have no analytics,
-so the audit leans on what those sites can actually show:
+The sites are static, server-rendered, cookie-free and have no analytics
+unless the user asked for it on that site, so the audit leans on what those sites can actually show:
 
 - the rendered HTML;
 - the build output;
@@ -75,14 +74,16 @@ directories; those need the user's go.
   element only rises (no fade).
 - Images: descriptive file names, `alt` on every content image, responsive
   `sizes`, modern formats through `next/image`.
-- URLs: lowercase, hyphenated, in the site's language, named the way
-  customers search, without umlauts (`/<service>-in-<city>`, with umlauts transliterated).
+- URLs: service pages at the top level (`/<service>`, not
+  `/leistungen/<service>`), lowercase, hyphenated, in the site's language,
+  named the way customers search, without umlauts (`/<service>-in-<city>`, with umlauts transliterated).
 
 **2.3 Titles, descriptions, headings**
 
 | Element | Rule |
 | --- | --- |
 | Title | unique; the query the page answers comes first; ≤ 60 characters, important words within the first ~50; brand last (`%s · Name` template) |
+| Home title | the business name first, then trade and place (`<Name> – <Trade> in <City>`) |
 | Service page title | `<Service> in <City>` when there is real local substance |
 | Utility page title | its plain name (`Kontakt`, `Impressum`) |
 | Description | unique, 120–160 characters, starts with the query, gives a reason to click, no invented promises |
@@ -221,10 +222,9 @@ businesses.
 
 - **Not for apps behind a login.** They don't need SEO beyond a sensible
   title and `noindex` on private routes.
-- **Title strategy for client sites:** the template's home title is
-  brand-first, while the audit rule is query-first. Until decided (see
-  [OPEN_QUESTIONS.md](../../../OPEN_QUESTIONS.md)), keep the template's
-  home title and use query-first everywhere else.
+- **Home page titles** may lead with the business name, since a local
+  business is often searched by name; every other page is query-first
+  (decided 2026-11-03).
 - **Analytics.** Recommending analytics is out of scope; if the user wants
   it, see
   [monitoring and analytics](../../../guidelines/external-services/monitoring-and-analytics.md).

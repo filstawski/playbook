@@ -8,7 +8,7 @@ Copy everything below this comment. Remove rules that don't apply to the project
 
 This project follows the user's playbook: <https://github.com/filstawski/playbook>.
 Start at its `INDEX.md`, read
-`guidelines/uncategorized/agent-workflow.md` before any task, and read the
+`guidelines/working-with-agents/agent-workflow.md` before any task, and read the
 category for your task before writing code. Skills from the playbook are
 vendored in `.agents/skills/` (with `.claude/skills` as a symlink to it):
 read the matching `SKILL.md` before each kind of task (committing,

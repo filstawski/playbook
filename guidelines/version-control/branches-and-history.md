@@ -47,10 +47,10 @@ git fetch origin && git merge origin/main
 git rebase origin/main && git push --force
 ```
 
-**Changed:** in one late session (2026-11) open PR branches were rebased
-during a large parallel batch and the user didn't object. That has not been
-confirmed as a new rule; see [OPEN_QUESTIONS.md](../../OPEN_QUESTIONS.md).
-Until it is, rebase only branches that nobody else has seen.
+**Decided 2026-11-03:** branches with an open PR get main merged in, never
+rebased and force-pushed. Rebasing is fine only for branches nobody else
+has seen yet. (One late session had rebased open PR branches during a large
+parallel batch; that is not the rule.)
 
 ## Keep both sides of parallel additions
 
@@ -83,6 +83,9 @@ git tag pre-forms-refactor
 # snapshot of uncommitted work without touching the index or branches
 git update-ref refs/snapshots/forms-wip "$(git stash create)"
 ```
+
+Work the user explicitly rejected is the exception: a discard means gone,
+with no hidden backup kept (decided 2026-11-03).
 
 ## After a merge on GitHub, clean up locally
 

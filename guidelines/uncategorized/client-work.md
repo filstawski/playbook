@@ -2,7 +2,7 @@
 
 > **Flagged as uncategorized.** Rules for delivering work to small-business
 > clients: messages, change requests, handover, legal pages. They don't fit
-> the twelve categories; see [OPEN_QUESTIONS.md](../../OPEN_QUESTIONS.md).
+> the categories, and stay here until the set grows (decided 2026-11-03).
 
 ## Confirm understanding of a change request before editing
 
@@ -106,3 +106,13 @@ future, and not a one-time record only.")
 
 A third-party component or asset licensed for one project isn't copied
 into other deliverables. Check the licence before reuse.
+
+## Don't showcase internal projects before there are client references
+
+**SHOULD** · 2026-11 · company website
+
+The company's own site shows client work once there are real, approved
+references. Internal side projects don't fill that space in the meantime.
+
+**Why:** decided 2026-11-03, after the question came up while planning a
+references section.

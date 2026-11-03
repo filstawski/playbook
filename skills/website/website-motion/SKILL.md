@@ -117,8 +117,8 @@ CSS file drifts ([patterns.md § P0](patterns.md#p0-foundation-tokens-css-twins-
 | everything that arrives with the page (first paint) | values that follow the pointer or an interrupted gesture |
 | scroll-linked effects (scroll timelines) | sequences that depend on measured sizes |
 
-This split is the current leaning, inferred from what was built and approved
-since October ([OPEN_QUESTIONS.md](../../../OPEN_QUESTIONS.md) #7). CSS plays
+The user confirmed this split on 2026-11-03, after it had been built and
+approved since October. CSS plays
 the same springs as Motion through the generated `linear()` curves, so both
 halves feel identical. Plain CSS eases and `transition-all`
 are what the user rejected early on ("the motion animations were much
@@ -190,16 +190,17 @@ website in two generations, and several client sites, September–November
 - **Not for non-React stacks as written.** The principles and tokens carry
   over to any web stack; the code assumes React 19, Next.js 16, Tailwind 4
   and `motion` ≥ 13.
-- **The intensity profile is per project.** A calm client site may sit
-  between the two profiles. The client-site template currently ships
-  no-bounce tweens (`bounce: 0`) that were never explicitly approved; check
-  with the user before treating them as the site default
-  ([OPEN_QUESTIONS.md](../../../OPEN_QUESTIONS.md)).
-- **Scroll reveals and parallax** are used on the newer sites, with the
-  rules above. An earlier site banned them outright; whether any of those
-  bans still stand is an open question.
+- **Client sites use the site profile's springs,** with visible bounce,
+  tuned per business (decided 2026-11-03). The client-site template's
+  no-bounce tweens (`bounce: 0`) are to be replaced, not copied.
+- **Scroll reveals, parallax, magnetic buttons and count-ups** are all
+  fine when they fit the UI ("they are fine when they fit the UI", decided
+  2026-11-03), under the rules above: tied to scroll position, complete
+  without support, still under reduced motion. An earlier blanket ban is
+  lifted.
 - **Continuous motion** (AI surfaces, ambient light, signature effects) only
-  where the user asked for it, and never on content objects.
+  where the user asked for it, and never on content objects. Ambient effects
+  are clearly visible but few; interactive feedback starts subtle.
 - **The liquid "bead" selection mark** (hand-stepped leading and trailing
   edges) is an approved option in one app; the simpler `layoutId` indicator
   is the default.

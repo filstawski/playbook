@@ -34,8 +34,7 @@ transitive dependency; add it explicitly or don't use it.
 
 Pick the newest release that has been out for at least seven days, matching
 the Dependabot cooldown, as protection against freshly published malicious
-versions. For security fixes picked by hand, a two-week bar was applied once and is
-still an open question (see
+versions. For security fixes picked by hand, the bar is two weeks (see
 [../ci-cd/dependencies-and-lockfiles.md](../ci-cd/dependencies-and-lockfiles.md)).
 Run only LTS Node (even majors, not end-of-life). Keep `.nvmrc`,
 `engines.node`, the Docker base image and `@types/node` on the same major.
