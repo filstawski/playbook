@@ -7,8 +7,8 @@ own backend** (Prisma, Server Actions, no separate API service) in the same
 Next.js app. Every skill here carries a qualifier — `dashboard` or
 `fullstack` — that names which kind it's from, so the two families never
 get confused once everything is symlinked flat into `~/.claude/skills/`.
-A future marketing/content-site Next.js skill would get its own qualifier
-the same way.
+Marketing and content sites got their own qualifier the same way: `site`
+(see below).
 
 ## `dashboard` — thin client over an external SDK/API
 
@@ -67,10 +67,24 @@ Reading order for a new app of this kind: `layered-architecture` →
   made for excluding `dashboard`'s SDK internals.
 - **`fullstack`'s visual design-guidelines system** (color tokens,
   typography, spacing, component rules, density modes) — real and
-  well-executed in the source app, held back for now.
-- **Marketing/content pages** — a future qualifier in this same `nextjs/`
-  folder (or `astro/`, once that framework is in play) — see the parent
-  [website/README.md](../README.md).
+  well-executed in the source app. The general rules have since been
+  written down in
+  [guidelines/design-guidelines/](../../../guidelines/design-guidelines/README.md)
+  (2026-11), without the app's specific values.
+
+## `site` — static marketing and small-business sites
+
+**Scope: content-first sites with no accounts and no backend of their own.**
+Every route is prerendered, nothing sets cookies, and a `mailto:` form
+replaces a server until one is decided.
+
+| Skill | Covers |
+| --- | --- |
+| [website-nextjs-site-setup](website-nextjs-site-setup/SKILL.md) | From the website template to the first preview: research, concept, facts module, brand, SEO baseline, legal pages, pages, checks, handover |
+
+Motion for both kinds of project is
+[website-motion](../website-motion/SKILL.md), one level up. Copy and SEO are
+in [skills/marketing/](../../marketing/README.md).
 
 ## Why this is organized as a domain, not flat
 
@@ -78,5 +92,5 @@ Skills within a kind (`dashboard` or `fullstack`) share vocabulary and
 cross-reference each other constantly (a `fullstack` list page's
 `queries.ts` call is explained in `layered-architecture`; its delete
 button is explained in `server-actions`). See the root
-[CONCEPT.md](../../CONCEPT.md) and [skills/api/README.md](../../api/README.md)
+[CONCEPT.md](../../../CONCEPT.md) and [skills/api/README.md](../../api/README.md)
 for a worked example of the same reasoning applied to another domain.

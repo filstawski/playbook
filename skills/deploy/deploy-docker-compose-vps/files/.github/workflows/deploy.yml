@@ -1,0 +1,129 @@
+# Puts a commit's image to work on staging or in production: over SSH, with a key whose only command
+# is deploy/deploy.sh, then a look at the address from outside. Staging gets every commit on main
+# from the Release workflow. Production is started by a person: Run workflow, production, and the
+# commit staging was checked on, or none for main's newest. A rollback is the same with the commit
+# before, which the last deploy's summary names. Each deploy is recorded as a GitHub deployment of
+# its environment.
+name: Deploy
+run-name: Deploy to ${{ inputs.environment }}${{ inputs.commit && format(' · {0}', inputs.commit) || '' }}
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        type: string
+        required: true
+      commit:
+        type: string
+        required: true
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Where to
+        type: choice
+        options: [production, staging]
+      commit:
+        description: The commit on main whose image goes there, its full SHA; empty for main's newest
+        type: string
+        required: false
+
+# One deploy at a time per environment, none cut off halfway.
+concurrency:
+  group: deploy-${{ inputs.environment }}
+  cancel-in-progress: false
+
+permissions: {}
+
+# With pipefail, which a step's default shell lacks: a deploy that failed fails the step, even
+# through `| tee`.
+defaults:
+  run:
+    shell: bash
+
+env:
+  PRODUCTION_HOST: <DOMAIN>
+  STAGING_HOST: staging.<DOMAIN>
+
+jobs:
+  deploy:
+    name: Deploy to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Only to record the deploy as a deployment: the job reads and writes nothing else on GitHub.
+    permissions:
+      deployments: write
+    env:
+      ENVIRONMENT: ${{ inputs.environment }}
+      COMMIT: ${{ inputs.commit || github.sha }}
+    steps:
+      - name: Check what goes where
+        run: |
+          [[ $ENVIRONMENT =~ ^(production|staging)$ ]] || { echo "::error::No environment \"$ENVIRONMENT\"."; exit 1; }
+          [[ $COMMIT =~ ^[0-9a-f]{40}$ ]] || { echo "::error::\"$COMMIT\" isn't a commit's full SHA."; exit 1; }
+          if [[ $ENVIRONMENT == production ]]; then host=$PRODUCTION_HOST; else host=$STAGING_HOST; fi
+          echo "HOST=$host" >> "$GITHUB_ENV"
+
+      # The deployment GitHub keeps of it, with its run and who started it: what went where and
+      # when. (Through the API, as GitHub Free's private repositories have no environments.) Never in
+      # the deploy's way: a deployment that can't be recorded is only a warning.
+      - name: Record the deployment
+        id: deployment
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ACTOR: ${{ github.triggering_actor }}
+        run: |
+          body=$(jq -n --arg ref "$COMMIT" --arg environment "$ENVIRONMENT" --arg run "$GITHUB_RUN_ID" --arg actor "$ACTOR" \
+            '{ref: $ref, environment: $environment, auto_merge: false, required_contexts: [],
+              production_environment: ($environment == "production"), payload: {run_id: $run, actor: $actor}}')
+          id=$(curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/deployments" -d "$body" | jq -r .id)
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+          curl -fsS -o /dev/null -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/deployments/$id/statuses" \
+            -d "$(jq -n --arg log "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+              '{state: "in_progress", log_url: $log}')"
+
+      # The server, its user and its host key are repository variables; the key alone is a secret.
+      # It's on the runner only while the step runs, in the job's own temp folder, never in ~/.ssh:
+      # a self-hosted runner keeps its files.
+      - name: Deploy over SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ vars.DEPLOY_KNOWN_HOSTS }}
+          SERVER: ${{ vars.DEPLOY_USER }}@${{ vars.DEPLOY_HOST }}
+        run: |
+          trap 'rm -f "$RUNNER_TEMP/deploy-key"' EXIT
+          (umask 077 && printf '%s\n' "$SSH_KEY" > "$RUNNER_TEMP/deploy-key")
+          printf '%s\n' "$KNOWN_HOSTS" > "$RUNNER_TEMP/known_hosts"
+          # The server runs deploy.sh whatever is asked; this says with what.
+          ssh -i "$RUNNER_TEMP/deploy-key" -o IdentitiesOnly=yes -o BatchMode=yes -o UserKnownHostsFile="$RUNNER_TEMP/known_hosts" \
+            "$SERVER" "$ENVIRONMENT $COMMIT" | tee "$RUNNER_TEMP/deploy.log"
+          grep -h " runs " "$RUNNER_TEMP/deploy.log" >> "$GITHUB_STEP_SUMMARY"
+          # The build the server saw answer, for the look from outside.
+          build=$(grep -oE '\(build [0-9a-f]{40}\)' "$RUNNER_TEMP/deploy.log" | tail -n 1 | tr -d '()' | cut -d ' ' -f 2 || true)
+          echo "BUILD=$build" >> "$GITHUB_ENV"
+
+      # From outside, through nginx and TLS: the health check, as the build deployed, and the home page.
+      - name: Look at it
+        run: |
+          health=$(curl -fsS --retry 5 --retry-all-errors --retry-delay 3 "https://$HOST/api/health")
+          echo "https://$HOST/api/health: $health"
+          [[ $health == *'"database":"ok"'* ]]
+          [[ -z $BUILD || $health == *"\"build\":\"$BUILD\""* ]] || { echo "::error::https://$HOST answers as another build than $BUILD."; exit 1; }
+          curl -fsS -o /dev/null "https://$HOST/"
+
+      # How it ended, on the deployment: success once it answers from outside, failure otherwise.
+      - name: Finish the deployment
+        if: always() && steps.deployment.outputs.id != ''
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ID: ${{ steps.deployment.outputs.id }}
+          STATE: ${{ job.status == 'success' && 'success' || 'failure' }}
+        run: |
+          curl -fsS -o /dev/null -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/deployments/$ID/statuses" \
+            -d "$(jq -n --arg state "$STATE" --arg url "https://$HOST" \
+              --arg log "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+              '{state: $state, environment_url: $url, log_url: $log}')"

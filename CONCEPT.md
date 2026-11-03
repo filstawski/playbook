@@ -173,6 +173,45 @@ skill — don't leave stale guidance around because it was once true. Git
 history is the changelog; no need for a "deprecated" graveyard inside the
 repo.
 
+### Guidelines (added 2026-11)
+
+Skills turned out to be the wrong shape for the many short rules that came
+out of daily work, such as "every input has a placeholder", "no AI
+attribution", or "resolve the lockfile on Linux". Each is one or two
+sentences with a reason, and forcing each into its own `SKILL.md` would
+have buried them. They now live in `guidelines/`:
+
+```
+guidelines/
+  README.md                  # the thirteen categories, entry format
+  <category>/                # ui-ux, design-guidelines, frontend, backend, stacks,
+    README.md                # apis, external-services, github, version-control,
+    <topic>.md               # ci-cd, deployment, working-with-agents;
+                             # uncategorized/ for misfits (flagged)
+```
+
+- **What an entry is.** A short imperative title; a strength (`MUST`,
+  `SHOULD`, `CONSIDER`), date and generic project type; the rule; why;
+  optionally an example and a "changed" note. See
+  [templates/GUIDELINE.md](templates/GUIDELINE.md).
+- **Guidelines link to skills instead of duplicating them.** When a topic
+  needs pages of code or a procedure, that's a skill, and the guideline
+  entry points to it.
+- **Guidelines aren't symlinked.** Agents reach them through
+  [INDEX.md](INDEX.md) and the drop-in [snippets/AGENTS.md](snippets/AGENTS.md),
+  which carries the top rules inline. Topic files therefore need no domain
+  prefix.
+- **This is still not a knowledge base.** Every entry is a rule an agent can
+  follow, not an explainer.
+- **Self-containment and privacy.** This repository is public, so source
+  lines name a generic project type ("dashboard app", "client site"), never
+  a project, client or company, and never a domain or a secret.
+
+Skills added in the same pass follow the existing conventions (domain
+prefix, Rule/Why/Exceptions, full code). Skills rebuilt from third-party
+sources carry a `README.md` beside the `SKILL.md`, naming what they were
+based on and including the upstream licence notice.
+
 ## Non-goals
 
 - Not a general knowledge base (no "how X works" explainers).

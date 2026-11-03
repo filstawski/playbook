@@ -6,18 +6,19 @@ Next.js app and a future Astro site, and even within one framework the
 answer differs between a logged-in dashboard and a public marketing/content
 site.
 
-One subfolder so far, grouped by framework:
+One subfolder so far, grouped by framework, plus one skill that applies
+across frameworks and site kinds:
 
-| Folder | Covers |
+| Folder / skill | Covers |
 | --- | --- |
-| [nextjs](nextjs/README.md) | Next.js product apps behind auth — both a thin client over an external SDK (`dashboard`) and a full-stack app that owns its own backend (`fullstack`) |
+| [nextjs](nextjs/README.md) | Next.js product apps behind auth, both a thin client over an external SDK (`dashboard`) and a full-stack app that owns its own backend (`fullstack`). Also, since the 2026-11 consolidation, static marketing sites (`site`). |
+| [website-motion](website-motion/SKILL.md) | Transitions, animations, morphs and scroll effects for React/Next.js apps and sites: rules, shared spring tokens, a pattern catalogue with code, and how motion is verified. Lives at this level because apps and sites share one motion vocabulary in two intensity profiles. |
 
-A future `astro/` folder (or a `nextjs/` marketing-site sub-theme) is where
-normal, mostly-static web pages will get their own skills — **deliberately
-not covered here**. Don't reuse a dashboard skill's patterns (client-heavy
-rendering, TanStack Query for every read, auth-gated layouts) for a content
-page; that's a different set of tradeoffs this domain hasn't written down
-yet.
+Marketing and content sites now have their own skill,
+[website-nextjs-site-setup](nextjs/website-nextjs-site-setup/SKILL.md). Don't
+reuse a dashboard skill's patterns (client-heavy rendering, TanStack Query
+for every read, auth-gated layouts) for a content page, or the other way
+round. A future `astro/` folder would sit next to `nextjs/`.
 
 ## Why this is organized as a domain, not flat
 

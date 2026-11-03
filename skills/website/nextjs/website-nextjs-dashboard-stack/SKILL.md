@@ -233,6 +233,13 @@ else in the app.
   map with no second "look" is completely fine and is in fact the more
   common case; only reach for a second variant map when a component
   genuinely needs two distinct visual treatments selectable at runtime.
+- **Newer projects (Oct 2026 on) use shadcn on Base UI**, not on Radix:
+  polymorphism is `render={<Link />}` instead of `asChild`, and Select
+  needs an explicit `items` map. Apps that own their backend replace
+  TanStack Query reads with Server Components. See
+  [guidelines/stacks/web-stack.md](../../../../guidelines/stacks/web-stack.md)
+  and [guidelines/frontend/components.md](../../../../guidelines/frontend/components.md).
+  This skill stays as the thin-client variant (decided 2026-11-03).
 - Don't reach for `file:` package linking + `transpilePackages` unless a
   sibling package is under active local co-development. Once it's stable,
   publish it (even to a private registry) — resolving raw TypeScript

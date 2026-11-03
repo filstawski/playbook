@@ -22,6 +22,12 @@ metadata:
   "make a commit," "commit and push" authorize the commit being asked for
   — not every future change in the same session. A green light once isn't
   a standing green light.
+- **"Commit" approves exactly what is staged now.** Stage one batch, list
+  its files and the proposed message, and stop. The next batch is staged
+  only after that commit. "Stage it and give me the message" means stage,
+  show, and don't commit. (Added 2026-11: an agent once committed three
+  unreviewed batches on one "commit the stages", and they had to be
+  undone.)
 - **The human needs an actual chance to look at the diff before it's
   committed.** If more changes were made after the point the human last
   looked, don't fold those into a commit on the assumption that an earlier

@@ -1,0 +1,128 @@
+# <APP> on its server: Postgres, the migrations, the app and (optionally) the worker, all but Postgres
+# from the image CI publishes. Production and staging each run this file from a folder of their own,
+# where deploy.sh puts it from the image it deploys, with a .env of their own (deploy.sh makes it,
+# deploy/.env.example explains it):
+#
+#   /srv/<APP>/production   project <APP>           the app on 127.0.0.1:3200
+#   /srv/<APP>/staging      project <APP>-staging   the app on 127.0.0.1:3201
+#
+# deploy.sh puts a new image to work: the migrations first, on their own, then the app and the
+# worker. nginx on the host brings the app to its address (deploy/nginx/site.conf). Nothing else on
+# the host reaches Postgres.
+#
+# Never `docker compose down -v`, `docker volume prune` or `docker system prune` on the server: the
+# volume holds the database, and on a shared host the prunes reach other projects' data too.
+#
+# A deploy runs the deploy.sh of the release before it (the one on the server), with THIS file from
+# the new image. So every variable a release adds here needs a default (`${NAME:-}`) or a profile
+# that is off until a newer deploy.sh writes the setting and turns it on: else the first deploy that
+# brings it stops before the migrations, on a variable the old script didn't know to write.
+
+name: ${COMPOSE_PROJECT_NAME:?the project, <APP> or <APP>-staging}
+
+# Every container's log, rotated: at most 50 MB of it on the disk.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "5"
+
+# The app, the worker and the migrations: one image, the commit deploy.sh put to work.
+x-app: &app
+  image: ghcr.io/<ORG>/<APP>:${APP_TAG:?the commit whose image runs, set by deploy.sh}
+  env_file: .env
+  environment:
+    # POSTGRES_PASSWORD is hex (openssl rand -hex 32), so it needs no escaping in the address.
+    DATABASE_URL: postgresql://app:${POSTGRES_PASSWORD:?}@db:5432/app
+  # Nothing in these containers needs a Linux capability or a way to gain privileges.
+  security_opt:
+    - "no-new-privileges:true"
+  cap_drop:
+    - ALL
+  logging: *logging
+
+services:
+  # Postgres on Debian, as development and CI run it. Its data lives in the volume, which nothing
+  # removes but `docker compose down -v`: never run that here. No port on the host: only this
+  # project's containers reach it (`docker compose exec db psql -U app app` for a person). Its
+  # capabilities stay, as its entrypoint switches from root to the postgres user.
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    security_opt:
+      - "no-new-privileges:true"
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      POSTGRES_DB: app
+    # Postgres 18 keeps its data in a versioned folder under /var/lib/postgresql, so the volume goes
+    # there (17 and older: /var/lib/postgresql/data).
+    volumes:
+      - db-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "app", "-d", "app"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    logging: *logging
+
+  # Brings the database up to the image's schema, then exits. Only deploy.sh runs it
+  # (`docker compose run --rm migrate`), before the app and the worker: were they to depend on it,
+  # Compose would stop them before it ran, and a failed migration would leave nothing running.
+  # Migrations never go back, so they're written expand/contract: a column is added before the code
+  # that needs it ships, and removed only once no image a rollback could reach reads it.
+  migrate:
+    <<: *app
+    profiles: [migrate]
+    command: ["node", "--enable-source-maps", "migrate.mjs"]
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  app:
+    <<: *app
+    restart: unless-stopped
+    # Forwards the stop signal and reaps what Node starts.
+    init: true
+    # Loopback only: nginx on the host is the way in. Docker writes its own firewall rules, so a
+    # port published on every address would be open to the internet whatever the host's firewall says.
+    ports:
+      - "127.0.0.1:${APP_PORT:?3200 for production, 3201 for staging}:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    # The image has Node, not curl.
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/api/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+  # The background jobs, optional: it runs where the environment's COMPOSE_PROFILES names `worker`
+  # (.env). It should finish the job in hand when stopped, within its own timeout, which this grace
+  # period outlasts. It beats a heartbeat that /api/health reports.
+  worker:
+    <<: *app
+    profiles: [worker]
+    command: ["node", "--enable-source-maps", "worker.mjs"]
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 30s
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Further services (a cache, an object store, ...) go here, each with:
+  # - a profile that deploy.sh turns on in .env together with the settings it needs (ensure_setting),
+  #   so a server whose deploy.sh predates the service keeps deploying without it;
+  # - a host port, if nginx must reach it, on 127.0.0.1 only, and none otherwise;
+  # - its data in a named volume below, and `logging: *logging`.
+
+volumes:
+  db-data:
