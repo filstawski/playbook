@@ -32,8 +32,8 @@ new open question.
 See [CONCEPT.md](CONCEPT.md) for the full rationale. Since the 2026-11
 consolidation there are two layers:
 
-- `guidelines/<category>/` holds short rules, grouped into the twelve
-  categories.
+- `guidelines/<category>/` holds short rules, grouped into the user's
+  twelve categories plus "working with agents".
 - `skills/` holds deep, invocable practices, as before.
 
 Short version of the skills layout:
