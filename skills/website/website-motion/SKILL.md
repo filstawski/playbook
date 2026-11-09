@@ -5,7 +5,8 @@ description: >-
   and sites with the `motion` library and CSS: the rules, the shared spring
   tokens, a runnable pattern catalogue, and how to verify motion before
   reporting. Use whenever UI appears, disappears, resizes, swaps, moves
-  between places, reacts to press/hover/scroll, or changes page.
+  between places, reacts to press/hover/scroll, is dragged or swiped
+  (sheets, drawers, carousels), or changes page.
 metadata:
   type: practice
   category: frontend
@@ -81,6 +82,11 @@ primitive rather than the screen that showed the bug. Read
 15. **Cheap by construction.** `LazyMotion` in strict mode; animate
     transform, opacity and clip-path only; no layout properties in CSS
     transitions.
+16. **What the user drags, the user holds.** It follows the pointer 1:1, can
+    be caught mid-flight, resists progressively past its ends, and on
+    release keeps the pointer's speed toward where the flick was going, then
+    lands on our springs. Nothing locks input while it settles. New and not
+    yet tuned by the user: see [P19](patterns.md#p19-drag-swipe-and-snap-sheets-drawers-carousels).
 
 ### Two intensity profiles, one vocabulary
 
@@ -108,6 +114,29 @@ screen"). The app profile below is the floor: never quieter than that.
 Define every token once in `src/lib/motion.ts`. Generate the CSS twins as
 `linear()` curves from the same springs with a script, and fail CI when the
 CSS file drifts ([patterns.md § P0](patterns.md#p0-foundation-tokens-css-twins-provider)).
+
+### Reading spring values from elsewhere
+
+Apple, SwiftUI and many motion guides give springs as a **damping ratio**
+(1 = no overshoot) and a **response** in seconds, not as stiffness and
+damping. Convert before comparing (mass 1):
+`stiffness = (2π / response)²`, `damping = 4π × ratio / response`. Motion's
+`bounce` + `duration` is a different pair again: there `duration` is the
+time until the spring has settled, not the response, so don't read one as
+the other.
+
+| Token | Ratio | Response | Overshoot |
+| --- | --- | --- | --- |
+| `SPRING_IN` 750/16 | 0.29 | 0.23 s | 38% |
+| `LIFT` 390/23 | 0.58 | 0.32 s | 11% |
+| `SETTLE` 420/28 | 0.68 | 0.31 s | 5% |
+| `ITEM_REORDER` 480/40 | 0.91 | 0.29 s | 0% |
+| `RELEASE` 500/16 | 0.36 | 0.28 s | 30% |
+
+Our springs respond as fast as Apple's (Apple ships 0.3–0.4 s). They
+differ only in damping: Apple defaults to ratio 1.0 and allows about 0.8
+after a flick, while ours bounce on purpose. That is the user's decision, not
+a calibration error. Don't import a guide's critically damped defaults.
 
 ### Motion (JS) or CSS
 
@@ -147,7 +176,8 @@ acceptable.
 | Toasts | [P15 Toasts](patterns.md#p15-toasts) |
 | Multi-step progress, drawn checks, arrival choreography | [P16 Beats](patterns.md#p16-progress-in-beats-drawn-checks-arrival-choreography) |
 | Ambient loops (AI surfaces, signature effects) | [P17 Ambient](patterns.md#p17-ambient--continuous-motion-only-where-asked) |
-| Reduced motion | [P18](patterns.md#p18-reduced-motion-summary-across-patterns) |
+| Reduced motion, reduced transparency, more contrast | [P18](patterns.md#p18-reduced-motion-summary-across-patterns) |
+| Drag, swipe-to-close sheets, drawers with snap heights, flicked carousels | [P19 Drag, swipe and snap](patterns.md#p19-drag-swipe-and-snap-sheets-drawers-carousels) |
 
 ### On marketing sites
 
@@ -201,6 +231,12 @@ website in two generations, and several client sites, September–November
 - **Continuous motion** (AI surfaces, ambient light, signature effects) only
   where the user asked for it, and never on content objects. Ambient effects
   are clearly visible but few; interactive feedback starts subtle.
+- **Gesture physics (principle 16, P19) is not from the user's projects
+  yet.** It restates Apple's published fluid-interface rules, checked
+  against Apple's own sample code, and lands on our springs. Its slop,
+  deceleration rate and dismiss point are starting values: show them on the
+  lab page and let the user settle them. Where it disagrees with a rule above,
+  the rule above wins.
 - **The liquid "bead" selection mark** (hand-stepped leading and trailing
   edges) is an approved option in one app; the simpler `layoutId` indicator
   is the default.
