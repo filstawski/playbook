@@ -76,6 +76,17 @@ them reliable.
 11. **Render exported motion videos (logo animations) frame by frame** at
     exact 1/60 s steps instead of screen-recording live. A live capture
     froze for 0.17–0.33 s, and the user saw "a slight lag".
+12. **Gestures: test the math, then flick for real.** Unit-test projection,
+    rubber-banding and the snap choice ([P19](patterns.md#p19-drag-swipe-and-snap-sheets-drawers-carousels)).
+    Then flick with timed pointer moves while probing the panel per frame:
+    - it doesn't move before the slop, and doesn't jump when crossing it;
+    - after release it keeps going the way the pointer went, with no stop
+      before the spring takes over;
+    - a touch while it settles catches it where it is;
+    - it ends exactly on a snap point.
+
+    Then try it on the iPhone and the Android phone: a missing
+    `touch-action` only shows there, as a scroll that steals the drag.
 
 ## Probe and capture snippets
 
@@ -140,5 +151,16 @@ async function film(page: Page) {
     await cdp.send("Page.stopScreencast");
     return frames;
   };
+}
+
+/** A flick: `distance` px along y in `ms`, released while still moving. Run `probe` first. */
+async function flick(page: Page, from: { x: number; y: number }, distance: number, ms = 120, steps = 8) {
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  for (let i = 1; i <= steps; i++) {
+    await page.mouse.move(from.x, from.y + (distance * i) / steps);
+    await page.waitForTimeout(ms / steps); // real time between moves, so the velocity is real
+  }
+  await page.mouse.up();
 }
 ```

@@ -2023,6 +2023,13 @@ hidden tab, ≤30–60 fps), still with reduced motion. Make an ambient motion v
 6 s was "too faint") and hand over the numbers to tune down. Check the space the effect spills into at
 each width (never over buttons or a neighbour).
 
+Large and slow is the risky combination. A full-viewport background that sways back and forth, or a
+whole-page breathing scale, with a cycle of roughly 3–10 s sits in the band (around 0.2 Hz) most tied
+to motion sickness. That figure comes from research on vehicle motion; Apple's design guidance carries
+it over to screens, and it has not come up in the user's projects. The loops above already flow one
+way and never reverse. Keep any back-and-forth loop to a part of the page, never the whole viewport;
+reduced motion stops it anyway (P18).
+
 
 ---
 
@@ -2044,6 +2051,279 @@ Implement with: `MotionConfig reducedMotion="user"` (once), CSS tokens zeroed un
 CSS, `useReducedMotion()` only to choose transitions/values (never to render different elements),
 `useMotionStrength()` for scroll-linked values. Test both: Playwright `reducedMotion: "reduce"` as the
 suite default and `"no-preference"` in motion specs; a site checker renders every page both ways.
+
+Two more settings touch the surfaces motion runs on. Any translucent surface (a sticky header or app
+bar with `backdrop-filter`, a blurred dim behind a dialog) keeps its own values and gets these
+overrides beside them:
+
+```css
+.translucent {
+  /* Less transparency: solid, no blur. Where a browser doesn't support the query, it never matches. */
+  @media (prefers-reduced-transparency: reduce) {
+    background-color: var(--background);
+    backdrop-filter: none;
+  }
+  /* More contrast: solid too, and a hairline edge (if it has one) at full strength. */
+  @media (prefers-contrast: more) {
+    background-color: var(--background);
+    backdrop-filter: none;
+    border-color: currentColor;
+  }
+}
+```
+
+
+---
+
+## P19. Drag, swipe and snap (sheets, drawers, carousels)
+
+**When:** something the user drags and lets go of: a bottom sheet swiped down to close, a drawer
+pulled between half and full height, a carousel flicked to the next slide. For a free drag that just
+returns or drops (a board card), Motion's own `drag` is enough (P5).
+
+**Status:** new on 2026-11-09, and not yet tuned by the user. The mechanics are Apple's published
+fluid-interface rules (see the README); the springs are ours. Treat the slop, deceleration rate and
+dismiss point as starting values and put them on the lab page before settling them.
+
+What a drag must do:
+
+- **Follow 1:1** under the pointer, from where it was grabbed, with pointer capture so it keeps
+  tracking off the handle.
+- **Catch mid-flight.** Touching a panel that is still settling stops it where it is on screen and
+  drags on from there, never from its target. Input is never locked during a transition.
+- **Wait 10 px before moving** (the slop), so a press isn't a drag, then count from that point so
+  crossing it doesn't jump the panel.
+- **Resist past its ends progressively** (rubber-banding): almost 1:1 at first, less the further it
+  goes. A hard stop reads as frozen.
+- **On release, keep the pointer's speed.** The spring starts at the release velocity, so there's no
+  seam between dragging and animating. Measure that velocity over the last ~100 ms of samples: one
+  jittery `pointermove` must not decide it, and a pointer that rested before letting go has none.
+- **Snap to where the flick is going**, not to the nearest point from where it was let go: project
+  the resting point first, then pick the snap point nearest that.
+- **Land on our springs.** Snaps settle on `SETTLE` (≈5%): a release often travels hundreds of pixels,
+  and `LIFT`'s 10% would swing far past (principle 4). A dismiss leaves on `ITEM_REORDER`, without
+  bounce: bouncy in, clean out.
+
+```ts
+// src/lib/gesture.ts — pure, unit-tested.
+
+/**
+ * How far a flick travels before it comes to rest, from its velocity in px/s. Exponential decay, as
+ * iOS scroll views decelerate (the form in Apple's "Designing Fluid Interfaces" sample code, not the
+ * textbook v²/2a). `rate` is the speed kept per millisecond: 0.998 normal, 0.99 stops quickly.
+ */
+export function project(velocity: number, rate = 0.998) {
+  return ((velocity / 1000) * rate) / (1 - rate);
+}
+
+/** Past an edge: follows almost 1:1 at first, then less and less, and never more than `dimension`. */
+export function rubberband(overshoot: number, dimension: number, constant = 0.55) {
+  return (overshoot * dimension * constant) / (dimension + constant * Math.abs(overshoot));
+}
+
+/** `value` kept inside [min, max], with the part outside rubber-banded. */
+export function resist(value: number, min: number, max: number, dimension: number) {
+  if (value < min) return min + rubberband(value - min, dimension);
+  if (value > max) return max + rubberband(value - max, dimension);
+  return value;
+}
+
+/** The point nearest to `to`. */
+export function nearest(points: readonly number[], to: number) {
+  return points.reduce((best, p) => (Math.abs(p - to) < Math.abs(best - to) ? p : best));
+}
+
+/** A pointer that hasn't moved for this long before letting go was holding still. */
+const AT_REST_MS = 50;
+
+/** Velocity in px/s over the last `windowMs` of samples (timestamps in ms, from the events). */
+export function createVelocityTracker(windowMs = 100) {
+  let samples: { t: number; value: number }[] = [];
+  return {
+    reset() {
+      samples = [];
+    },
+    add(t: number, value: number) {
+      samples.push({ t, value });
+      while (samples.length > 2 && t - samples[0].t > windowMs) samples.shift();
+    },
+    velocity(now: number) {
+      const first = samples[0];
+      const last = samples.at(-1);
+      if (!first || !last || last.t === first.t || now - last.t > AT_REST_MS) return 0;
+      return ((last.value - first.value) / (last.t - first.t)) * 1000;
+    },
+  };
+}
+```
+
+```tsx
+// src/hooks/use-drag-to-snap.ts
+"use client";
+import { animate, useMotionValue, useReducedMotion } from "motion/react";
+import { type PointerEvent, useRef } from "react";
+import { createVelocityTracker, nearest, project, resist } from "@/lib/gesture";
+import { ITEM_REORDER, SETTLE } from "@/lib/motion";
+
+type Options = {
+  axis?: "x" | "y";
+  /** Resting offsets in px along the axis. 0 is where the panel rests when open (or the first slide). */
+  snaps: readonly number[];
+  /** The panel's size along the axis, read when a gesture starts: the rubber-band scale and the dismiss distance. */
+  size: () => number;
+  /** Called once a dismissing flick has carried the panel out (toward positive offsets). Omit if it can't be dismissed. */
+  onDismiss?: () => void;
+};
+
+/** Below this, a press is still a press and the panel doesn't move. */
+const SLOP = 10;
+
+/**
+ * Drag a panel between snap points: 1:1 under the pointer, caught mid-flight, resisting past its ends,
+ * and on release it keeps the pointer's speed toward the point the flick projects to. Spread
+ * `handleProps` on the handle (which needs `touch-action: none`) and put `offset` on the panel's own
+ * motion layer: `style={{ y: offset }}`.
+ */
+export function useDragToSnap({ axis = "y", snaps, size, onDismiss }: Options) {
+  const offset = useMotionValue(0);
+  const reduced = useReducedMotion();
+  const tracker = useRef(createVelocityTracker());
+  const gesture = useRef<{ id: number; start: number; from: number; size: number; dragging: boolean } | null>(null);
+  const along = (e: PointerEvent) => (axis === "y" ? e.clientY : e.clientX);
+
+  const onPointerDown = (e: PointerEvent<HTMLElement>) => {
+    if (e.button !== 0 || gesture.current) return;
+    offset.stop(); // caught mid-flight: it stays where it is on screen
+    e.currentTarget.setPointerCapture(e.pointerId);
+    gesture.current = { id: e.pointerId, start: along(e), from: offset.get(), size: size(), dragging: false };
+  };
+
+  const onPointerMove = (e: PointerEvent<HTMLElement>) => {
+    const g = gesture.current;
+    if (!g || e.pointerId !== g.id) return;
+    if (!g.dragging) {
+      if (Math.abs(along(e) - g.start) < SLOP) return;
+      g.dragging = true;
+      g.start = along(e); // count from here, so crossing the slop doesn't jump the panel
+      tracker.current.reset();
+    }
+    const min = Math.min(...snaps);
+    const max = onDismiss ? g.size : Math.max(...snaps);
+    const next = resist(g.from + along(e) - g.start, min, max, g.size);
+    offset.set(next);
+    tracker.current.add(e.timeStamp, next);
+  };
+
+  const onRelease = (e: PointerEvent<HTMLElement>) => {
+    const g = gesture.current;
+    if (!g || e.pointerId !== g.id) return;
+    gesture.current = null;
+    // A cancelled pointer (the browser took the gesture) and a tap carry no speed.
+    const velocity = g.dragging && e.type === "pointerup" ? tracker.current.velocity(e.timeStamp) : 0;
+    const dismissAt = onDismiss ? g.size : undefined;
+    const target = nearest(dismissAt === undefined ? snaps : [...snaps, dismissAt], offset.get() + project(velocity));
+    if (target === dismissAt) {
+      animate(offset, target, { ...ITEM_REORDER, velocity, onComplete: onDismiss });
+    } else {
+      // A tap that caught it mid-flight lands here too, with no speed, and settles to the nearest point.
+      animate(offset, target, { ...(reduced ? ITEM_REORDER : SETTLE), velocity });
+    }
+  };
+
+  return {
+    offset,
+    /** Put the panel back without motion, once its overlay has finished closing. */
+    reset: () => offset.jump(0),
+    handleProps: { onPointerDown, onPointerMove, onPointerUp: onRelease, onPointerCancel: onRelease },
+  };
+}
+```
+
+A bottom sheet that swipes closed, on the mounted overlay from P14:
+
+```tsx
+"use client";
+import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
+import * as m from "motion/react-m";
+import { type ReactNode, useRef } from "react";
+import { useDragToSnap } from "@/hooks/use-drag-to-snap";
+
+export function BottomSheet({ open, onOpenChange, children }: { open: boolean; onOpenChange: (open: boolean) => void; children: ReactNode }) {
+  const panel = useRef<HTMLDivElement>(null);
+  const { offset, reset, handleProps } = useDragToSnap({
+    snaps: [0],
+    size: () => panel.current?.offsetHeight ?? window.innerHeight,
+    onDismiss: () => onOpenChange(false),
+  });
+  return (
+    <DialogPrimitive.Root open={open} onOpenChange={onOpenChange} onOpenChangeComplete={(isOpen) => { if (!isOpen) reset(); }}>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Backdrop forceRender className="fixed inset-0 z-50 bg-black/60 dim" />
+        {/* The popup's CSS owns opening and closing (translate, scale, opacity); the drag owns the inner
+            layer's transform. Never both on one element (principle 6). */}
+        <DialogPrimitive.Popup data-side="bottom" className="fixed inset-x-0 bottom-0 z-50 sheet-in">
+          <m.div ref={panel} style={{ y: offset }} className="rounded-t-2xl bg-background pb-[env(safe-area-inset-bottom)]">
+            <div {...handleProps} aria-hidden className="flex h-7 cursor-grab touch-none items-center justify-center active:cursor-grabbing">
+              <span className="h-1 w-10 rounded-full bg-muted-foreground/40" />
+            </div>
+            {children /* includes a close button: dragging is never the only way out */}
+          </m.div>
+        </DialogPrimitive.Popup>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
+  );
+}
+```
+
+A drawer with two heights uses `snaps: [0, half]` (offset 0 = full height, `half` = how far down
+the half-open state sits). A carousel uses `axis: "x"`, `snaps` at `0, -w, -2w…` and no `onDismiss`.
+
+```ts
+// src/lib/gesture.test.ts
+import { describe, expect, it } from "vitest";
+import { createVelocityTracker, nearest, project, resist, rubberband } from "./gesture";
+
+describe("gesture math", () => {
+  it("projects a 1000 px/s flick about 500 px at the normal rate", () => {
+    expect(project(1000)).toBeCloseTo(499, 0);
+    expect(project(-1000)).toBeCloseTo(-499, 0);
+  });
+  it("rubber-bands progressively and never past the dimension", () => {
+    expect(rubberband(10, 800)).toBeCloseTo(5.46, 1); // near the edge: about half
+    expect(rubberband(100, 800)).toBeCloseTo(51.5, 1);
+    expect(rubberband(1e6, 800)).toBeLessThan(800);
+    expect(resist(50, 0, 100, 800)).toBe(50); // inside: untouched
+  });
+  it("snaps to the point nearest the projection, not the release point", () => {
+    expect(nearest([0, 600], 200 + project(1000))).toBe(600);
+    expect(nearest([0, 600], 200)).toBe(0);
+  });
+  it("reads no speed from a pointer that rested before letting go", () => {
+    const v = createVelocityTracker();
+    v.add(0, 0);
+    v.add(16, 16);
+    expect(v.velocity(16)).toBeCloseTo(1000, 0);
+    expect(v.velocity(200)).toBe(0);
+  });
+});
+```
+
+**Pitfalls:**
+
+- Without `touch-action: none` on the handle, the browser takes the touch for scrolling and sends
+  `pointercancel` halfway; it only shows on a phone. For a vertical drag inside something that
+  scrolls sideways, `touch-action: pan-x`.
+- Start with a handle. Dragging the whole sheet means fighting its scrolling content: start the drag
+  only when the content is scrolled to its top and the move is downward, otherwise let it scroll.
+- A 2D throw (a floating panel to a corner) runs one offset per axis, each with its own velocity, as
+  P5 does: one spring over the diagonal distance desyncs when the two speeds differ.
+- Motion's own `drag` resists linearly past `dragConstraints` (`dragElastic`), and its momentum
+  projects `power × velocity` (default 0.8, about 60% further than the 0.998 rate). That is fine for
+  P5. For snap panels, use this hook. If you stay on Motion's `drag` anyway, use
+  `dragTransition={{ power: 0.5, modifyTarget: snap }}` to come close.
+- No haptics: the Vibration API doesn't exist in iOS Safari, and the user tests on an iPhone. Feedback
+  for a snap stays visual.
+- Reduced motion keeps the 1:1 drag (the user is moving it) and drops only the release overshoot.
 
 
 ---
