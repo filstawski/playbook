@@ -63,7 +63,7 @@ import { useForm } from "react-hook-form";
 
 const form = useForm<ProfileFormValues>({
   resolver: zodResolver(ProfileFormSchema),
-  mode: "onChange",
+  mode: "onTouched",
   reValidateMode: "onChange",
   // `values` (not `defaultValues`) keeps the form in sync if the
   // underlying data changes out from under it (e.g. a websocket update) —
@@ -77,9 +77,14 @@ const form = useForm<ProfileFormValues>({
 });
 ```
 
-Prefer `mode: "onChange"` for settings-style forms so submit-button
-disabled state and field errors update live as the user types, rather than
-only surfacing on blur or submit.
+Use `mode: "onTouched"`. A field is first checked when the person leaves
+it, and from then on on every keystroke, so an error clears the moment it's
+fixed. With `onChange`, a half-typed email already showed "invalid" after
+its first letter. `reValidateMode: "onChange"` keeps the same live
+re-check after a submit (decided 2026-11-13; see
+[forms](../../../../guidelines/ui-ux/forms.md#check-a-field-when-its-left-then-live-once-its-wrong)).
+
+**Changed:** this skill used `mode: "onChange"` until 2026-11-13.
 
 ### `Field` / `FieldGroup` / `FieldLabel` / `FieldContent` / `FieldError`: compose form markup instead of hand-rolling it per field
 
@@ -191,8 +196,14 @@ const editMutation = useMutation({
   },
 });
 
-<form onSubmit={form.handleSubmit((data) => editMutation.mutateAsync(data))}>
+<form onSubmit={form.handleSubmit((data) => editMutation.mutateAsync(data), shakeInvalid)}>
 ```
+
+The second `handleSubmit` callback runs when the browser-side check fails.
+`shakeInvalid` shakes each wrong field slightly, once, and react-hook-form
+focuses the first one itself. Server errors don't shake anything: they go
+to `root`, above the buttons. The helper and its values are in
+[website-motion P2](../../website-motion/patterns.md#p2-heightwidth-auto-collapse-animatedimensions-fielderror).
 
 `getChangedFields` (a two-object diff — see the project-structure skill's
 `lib/utils.ts` example) keeps the request payload to only what actually
@@ -359,10 +370,11 @@ footer, instead of every form reinventing its own `isSubmitting` flag.
   "edit in place, save when ready" settings pages. A create/edit dialog
   that's fully modal (can't be left half-filled and walked away from) is
   better served by an ordinary submit button inside the dialog's footer.
-- `mode: "onChange"` re-runs the Zod resolver on every keystroke — fine for
-  small dashboard forms, but reconsider (`mode: "onBlur"` or `onSubmit`) if
-  a form's schema does something expensive (e.g. a `.refine()` that makes
-  a network call) since that cost now runs on every keystroke too.
+- Once a field has been touched, `onTouched` re-runs the Zod resolver on
+  every keystroke. That's fine for dashboard forms. If a schema does
+  something expensive (a `.refine()` that makes a network call), use
+  `mode: "onBlur"` with `reValidateMode: "onBlur"` for that form, so the cost
+  runs once per field instead of once per key.
 - `MutateButton`'s invisible-measurement-layer trick to keep dimensions
   stable is only worth the complexity when a layout jump would actually be
   visually disruptive (a button inline with body text). A block-level
