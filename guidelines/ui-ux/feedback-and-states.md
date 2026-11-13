@@ -20,6 +20,35 @@ arrives ("the ZIP download button just does nothing for a few seconds").
 Inline autosave fields show a spinner while saving, then a check that fades
 out, announced to screen readers.
 
+## Actions that almost never fail show their result at once
+
+**SHOULD** · 2026-11 · established UX law
+
+Toggles, stars, reordering, mark as read and moving a card to another stage
+change on the same frame as the click. If the server refuses, roll back and
+say so (`useOptimistic`, or a TanStack Query mutation's `onMutate`/`onError`).
+Final submits still wait for the server, with the busy state above: paying,
+sending something to a client, creating what other people will see.
+
+**Why:** the Doherty threshold. People stay in flow when the interface
+answers within about 400 ms, and an action that waits for a round trip it
+almost never needs feels slow. The user's own "quick actions happen at
+once" rule below is the same idea for dialogs.
+
+## Show what was there last time, never a default that flips
+
+**SHOULD** · 2026-11 · established UX law
+
+While data loads, show what the person saw last time, from the query cache,
+and update it when the answer lands. When nothing is cached, show a skeleton
+the size of the content ([website-motion P9](../../skills/website/website-motion/patterns.md#p9-skeleton--loading--content-crossfade)).
+Never render a default state that the fetch then overturns: an empty star
+that fills, a "0" that becomes 12, "Nothing here yet" that becomes a list.
+
+**Why:** the Doherty threshold again. A flipped default reads as the
+product changing its mind, and the first state people see is the one they
+act on.
+
 ## Long tasks show phases, never a fake percentage
 
 **SHOULD** · 2026-08 · dashboard app
@@ -41,6 +70,23 @@ moment a task ends.
 When a create sheet closes, confirm briefly where the item landed ("created,
 due tomorrow", "no date: under All"). Default fields like the date to the
 view it was created from, so the new item doesn't seem to vanish.
+
+## End every flow on what happened; fix the worst moment first
+
+**SHOULD** · 2026-11 · established UX law
+
+- **The ending.** Every flow (sign-up, checkout, an import, a multi-step
+  form) ends on a confirmation that says what happened and what comes next,
+  never on a bare redirect.
+- **Celebration.** Save it for real milestones, such as a first success or
+  a finished setup ([website-motion P16](../../skills/website/website-motion/patterns.md#p16-progress-in-beats-drawn-checks-arrival-choreography)).
+  Routine completions get the quiet confirmation above.
+- **Polish order.** When choosing what to polish, fix the worst moment (an
+  error, a long wait, a dead end) before improving an average one.
+
+**Why:** the peak-end rule. People judge an experience by its most intense
+moment and by its end, and those two are what they remember and tell others
+about.
 
 ## Quick actions happen at once; extras come after
 
@@ -96,6 +142,23 @@ checkbox."
 
 **Why:** users without a permission were silently sent back to the home page
 and didn't understand why ("Please add proper states").
+
+## Reversible actions get Undo, not a confirmation
+
+**SHOULD** · 2026-11 · established UX law
+
+Archiving, removing from a list, marking done and moving one item happen at
+once, with no dialog in front. A toast offers Undo for 8 seconds. The request
+goes out when the toast closes without Undo, or when the page is hidden, so
+Undo only has to put the item back
+([website-motion P15](../../skills/website/website-motion/patterns.md#p15-toasts)).
+Keep confirmation dialogs for what can't be undone, and for actions that
+take other records with them. Those follow the next entry.
+
+**Why:** people click through confirmation dialogs by habit, so a
+confirmation prevents little, while Undo still works after the mistake.
+Where the two disagree, the user's own rule below wins: a trash
+confirmation that names what goes along with it stays.
 
 ## Confirmations state consequences
 

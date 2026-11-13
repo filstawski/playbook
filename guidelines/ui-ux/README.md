@@ -6,9 +6,9 @@ empty and locked states, forms, interaction, navigation.
 | File | Covers |
 | --- | --- |
 | [motion.md](motion.md) | the motion rules every agent must know; the full system is the [website-motion](../../skills/website/website-motion/SKILL.md) skill |
-| [feedback-and-states.md](feedback-and-states.md) | busy, progress, created, empty, locked, permission, confirm, layout stability, first paint |
-| [forms.md](forms.md) | error placement, placeholders, required fields, validators, lookups, natural-language dates, AI-filled fields |
-| [interaction.md](interaction.md) | pointer and hit targets, buttons, tables, deep links, menus, shortcuts, touch, viewers, assistants |
+| [feedback-and-states.md](feedback-and-states.md) | busy, optimistic updates, cached reads, progress, created, flow endings, empty, locked, permission, undo vs confirm, layout stability, first paint |
+| [forms.md](forms.md) | error placement, validation timing, the error shake, placeholders, required fields, validators, lookups, natural-language dates, AI-filled fields, lenient formats, chunking, defaults, multi-step progress, follow-up fields |
+| [interaction.md](interaction.md) | pointer and hit targets, where primary and destructive actions go, buttons, tables, deep links, menus, long choice lists, shortcuts, conventions, touch, viewers, assistants |
 | [navigation-and-structure.md](navigation-and-structure.md) | breadcrumbs, areas and tabs, entry points, overview pages, quiet records, one job per page |
 
 ## Know these first

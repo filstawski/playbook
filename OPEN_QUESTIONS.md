@@ -4,6 +4,23 @@ No questions are open right now. New ones go at the top of this file, each
 with its evidence and a leaning, and stay out of the guidelines and skills
 as rules until they are decided.
 
+## Decided 2026-11-13
+
+From comparing website-motion with an outside motion and UX-laws skill
+(charles-ux-animation). Each decision is written into the file named after
+it.
+
+| # | Question | Decision | Written into |
+| --- | --- | --- | --- |
+| 27 | Add established laws of UX to the guidelines? | Yes, marked "established UX law", at most SHOULD; the user's own rules win. | [CONCEPT](CONCEPT.md), [template](templates/GUIDELINE.md), [forms](guidelines/ui-ux/forms.md), [feedback-and-states](guidelines/ui-ux/feedback-and-states.md), [interaction](guidelines/ui-ux/interaction.md), [layout-and-typography](guidelines/design-guidelines/layout-and-typography.md) |
+| 28 | When are form fields checked? | When a field is left, then live once it shows an error (`onTouched`), instead of on every keystroke from the start. | [forms](guidelines/ui-ux/forms.md), [dashboard-forms](skills/website/nextjs/website-nextjs-dashboard-forms/SKILL.md) |
+| 29 | Should the selection mark jump instantly for keyboard moves? | No: it slides "a lot faster" for keyboard moves, with no overshoot; a held-down key places it at once. | [website-motion](skills/website/website-motion/SKILL.md) (P4) |
+| 30 | Arcs for cards moving on both axes? | "Slightly": 8% of the distance, at most 32 px; single-axis moves stay straight. | [website-motion](skills/website/website-motion/patterns.md) (P5) |
+| 31 | Shake the wrong field on a failed submit? | "Yes, shake it slightly": a few pixels, once, on submit only. | [forms](guidelines/ui-ux/forms.md), [website-motion](skills/website/website-motion/patterns.md) (P2) |
+
+The values for 29–31 and the new toast pattern (P15) are starting points,
+still to be tuned on a lab page.
+
 ## Decided 2026-11-03
 
 All 26 questions from the 2026-11 consolidation, decided by the user. Each

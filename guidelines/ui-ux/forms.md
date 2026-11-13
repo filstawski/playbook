@@ -18,6 +18,36 @@ cross-field rules still run when another field fails.
 **Why:** "The password field gets invalid even if it's an error 500 and has
 nothing to do with the password."
 
+## Check a field when it's left, then live once it's wrong
+
+**SHOULD** · 2026-11 · every form (decided 2026-11-13)
+
+Never mark a field wrong while someone is still typing it for the first
+time. Check it when they leave it (or on submit). Once it shows an error,
+re-check it on every keystroke, so the error clears the moment it's fixed.
+In react-hook-form: `mode: "onTouched"`, `reValidateMode: "onChange"`
+([website-nextjs-dashboard-forms](../../skills/website/nextjs/website-nextjs-dashboard-forms/SKILL.md)).
+
+**Why:** Postel's law (an established UX law) and the user's decision on
+2026-11-13. With checks on every keystroke from the start, a half-typed email
+showed "invalid" after its first letter.
+
+**Changed:** forms used `mode: "onChange"` until 2026-11-13.
+
+## A failed submit shakes the wrong fields, slightly
+
+**SHOULD** · 2026-11 · every form (decided 2026-11-13)
+
+When a submit fails the browser-side check, each wrong field shakes once,
+a few pixels, as well as getting its red rim and message, and focus moves to
+the first wrong field. Nothing shakes on blur, while typing, or for a server
+or network error (that message goes above the buttons). Under reduced
+motion nothing shakes. Code: [website-motion P2](../../skills/website/website-motion/patterns.md#p2-heightwidth-auto-collapse-animatedimensions-fielderror).
+
+**Why:** the user decided "yes, shake it slightly" on 2026-11-13. The
+movement shows where the problem is in a long form, and kept small it reads
+as a nudge rather than a scolding.
+
 ## Every input has a bare example placeholder
 
 **MUST** · 2026-09 → 2026-10 · dashboard apps (6 sources)
@@ -130,3 +160,95 @@ confidence threshold (about 0.8), show a review prompt with the evidence,
 the alternative readings, a "looks right" action, and a way to type a
 correction ("what if both are wrong?"). Block submit until flagged fields
 have been reviewed.
+
+## Accept every common format, then show back one clean one
+
+**SHOULD** · 2026-11 · established UX law
+
+Parse what people type before validating it. Accept spaces, dashes, dots
+and brackets in phone, card and IBAN numbers. Trim stray spaces from emails
+and pasted values. When the field is left, show the value back in its one
+clean format ("+49 30 1234567", "DE89 3704 0044 0532 0130 00"). Then run the
+shared strict validators
+([formatted fields](#formatted-fields-share-one-strict-validator-set)) on the
+parsed value. If parsing really fails, keep what was typed and name the
+format that works, with an example. Dates follow
+[natural-language dates](#accept-natural-language-for-dates-and-schedules).
+
+**Why:** Postel's law. Rejecting a number because it has spaces moves the
+product's work onto the person, and a field that clears what they typed
+makes them type it twice.
+
+## Chunk long numbers and format them as people type
+
+**SHOULD** · 2026-11 · established UX law
+
+- **Numbers in groups.** Anything longer than about five characters that
+  people read, compare or type is shown in groups: card numbers 4-4-4-4
+  (Amex 4-6-5), IBANs in fours, phone numbers in their national format,
+  one-time codes as 3 + 3.
+- **Format as people type.** Fixed-pattern numbers are grouped while they're
+  typed, without moving the caret, and stored without the formatting.
+- **Short sections.** Long forms are split into sections of about five
+  fields under a heading.
+- **Nothing to carry.** Never make people remember a value from one screen
+  to enter on the next; show it where it's needed.
+
+**Why:** Miller's law. Working memory holds a handful of items, and a chunk
+counts as one, so 16 digits become 4 groups. Typos in grouped numbers are
+also easier to spot.
+
+## Don't ask for what you know; default to the free, private choice
+
+**SHOULD** · 2026-11 · established UX law
+
+- **Prefill what the product knows or can infer:** the account's name and
+  email, the country from the locale, the city from the postal code
+  ([lookups](#lookups-fill-only-empty-fields-and-say-what-they-did)).
+- **Default every choice to what most people pick,** and remember last-used
+  values (the last project, the last assignee).
+- **Help the browser fill the rest:** every field has an `autocomplete`
+  attribute.
+- **The free, private option is the default.** Never pre-select an option
+  that costs money or shares data.
+- **Say how long a long task takes,** up front ("about 2 minutes").
+
+**Why:** Tesler's and Parkinson's laws. Complexity the product doesn't take
+on, every person pays for every time, and each blank field is an invitation
+to stop and think. Pre-selecting what costs or shares is a dark pattern.
+
+## Multi-step forms show where you are and can be resumed
+
+**SHOULD** · 2026-11 · established UX law
+
+- **Where you are.** A form split into steps shows the position and what's
+  left ("Step 2 of 4"), with finished steps marked done. A step done before
+  the form started (the account exists) counts as done, so progress never
+  reads zero after the first action.
+- **Resume.** Partial progress is saved, and coming back offers to continue
+  where the person stopped.
+- **Save in the background.** A step that passes the browser-side check
+  saves in the background while the person moves on. A failed save shows a
+  toast with Retry and keeps their place. The exception is a step whose saved
+  result the next step needs: it waits like a final submit.
+- **Motion.** The progress bar grows from its last value and never jumps
+  backward ([website-motion P16](../../skills/website/website-motion/patterns.md#p16-progress-in-beats-drawn-checks-arrival-choreography)).
+
+**Why:** the Zeigarnik effect and the goal-gradient effect. Unfinished tasks
+stay on people's minds, and people speed up as a goal gets close, so
+visible progress pulls them through and a lost draft loses them.
+
+## Show a follow-up field only once it's needed
+
+**SHOULD** · 2026-11 · established UX law
+
+Show the fields most people need. A field that only matters after a certain
+answer ("Other…" → a text field, "Invoice to a different address" → the
+address) appears once that answer is given, growing in with `Collapse`
+([website-motion P2](../../skills/website/website-motion/patterns.md#p2-heightwidth-auto-collapse-animatedimensions-fielderror)).
+Rarely used options go behind "More options". Never hide something most
+people need.
+
+**Why:** progressive disclosure. Fields shown before they're relevant
+are complexity everyone pays for. It pairs with
+[requiring only what the step needs](#require-only-what-the-step-needs-mark-required-not-optional).

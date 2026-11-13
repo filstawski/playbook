@@ -23,6 +23,26 @@ that it could be opened.
 }
 ```
 
+## The primary action sits near the hand; destructive actions sit away from it
+
+**SHOULD** · 2026-11 · established UX law
+
+- **Primary action.** It's the largest target and sits where the pointer or
+  thumb already is: beside the field or form it submits, and within thumb
+  reach at the bottom of the screen on phones.
+- **Destructive actions** are never next to Save. They go in the ⋯ menu
+  ([quiet records](navigation-and-structure.md#quiet-records)) or at the far
+  side, so a slip can't hit them.
+- **Destructive confirmations.** Cancel takes the default focus, and the
+  destructive button is no larger than Cancel and names the verb ("Delete
+  address", not "OK"). Where the user must type a name to confirm, the text
+  field takes focus instead.
+- **Hit areas** are covered in
+  [design-interface-polish](../../skills/design/design-interface-polish/SKILL.md).
+
+**Why:** Fitts's law. The bigger and closer a target, the faster and
+surer the hit, and that applies to the wrong target too.
+
 ## Buttons keep their size; every action has an icon
 
 **MUST** · 2026-09 → 2026-10 · dashboard apps (4 sources)
@@ -79,6 +99,24 @@ had to hunt for the task they had clicked.
 a services menu to open on hover as well as on click, and hover alone would
 fail touch and keyboard users.
 
+## Long choice lists: groups of seven or fewer, or search first
+
+**SHOULD** · 2026-11 · established UX law
+
+- **Options people weigh against each other** (plans, sort orders, settings,
+  onboarding choices): cut the ones few people pick, and keep each group to
+  seven or fewer under a heading.
+- **Lookups** (a country, a record, a font, the command palette), where
+  people already know what they want: open with focus in a search field.
+  Search makes the list's length irrelevant.
+- **One decision per step** in onboarding.
+- **"Recommended"** marks an option only when there's a real
+  recommendation behind it.
+
+**Why:** Hick's law. Decision time grows with the number of choices weighed
+at once. Grouping turns one long decision into two short ones, and a
+lookup isn't a decision at all.
+
 ## Keyboard shortcuts never fire while typing
 
 **SHOULD** · 2026-10 · dashboard app
@@ -89,6 +127,27 @@ one shared `isTyping(target)` helper.
 
 **Why:** a quick-add field sat on a screen with single-key choice shortcuts,
 and typing in it must not trigger them.
+
+## Keep the conventions people know from other products
+
+**SHOULD** · 2026-11 · established UX law
+
+- **Esc** closes the top layer, and only that one.
+- **Enter** submits a single-field form.
+- **⌘K / Ctrl+K** opens the command palette where there is one.
+- **The browser's Back** closes a sheet or viewer that was opened with a
+  URL parameter ([clicking an item](#clicking-an-item-opens-that-item)).
+- **The logo** links home. The account menu sits top right.
+- **Common icons keep their meaning:** a magnifier means search, a gear means
+  settings.
+- **Links look like links.**
+
+Put the novelty in the content and the craft, not in where things live or
+what keys and gestures do. If a convention has to break, keep the
+conventional path working too.
+
+**Why:** Jakob's law. People spend most of their time in other products and
+bring those habits with them, so a moved convention costs them every time.
 
 ## Touch: light what the eye rests on
 
