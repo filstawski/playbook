@@ -11,7 +11,9 @@ them reliable.
    a landscape phone. Crop to the section **and what is below it**: a list
    fading in correctly while the sections below jumped in one frame was
    missed until the crop included them ("how could you have made this
-   mistake without noticing").
+   mistake without noticing"). Also go through every menu and list with
+   the keyboard, tapping and then holding an arrow key: the selection mark
+   keeps up with the focus.
 2. **Use a production build on its own port, never the user's dev server.**
    Dev compiles freeze animations mid-flight, and the user's server is
    theirs. Still read the dev server's console after an update: hydration

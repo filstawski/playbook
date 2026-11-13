@@ -226,6 +226,28 @@ Element that comes and goes in place (a button leaving after an action):
   opacity 0 it still takes the click).
 - A badge whose words change: key a new badge rather than crossing the words inside one (its width
   would change at once under gliding neighbours).
+- Two images crossing in one cell let the background show through at the midpoint, because two
+  layers at 50% don't cover like one at 100% (a photo looks washed out mid-swap). Isolate the
+  cell and add the two layers with `plus-lighter`, on one equal fade so their opacities always sum
+  to 1. Text swaps don't need this.
+
+```tsx
+// An image (or any opaque surface) crossing to the next: no washed-out midpoint.
+<div className="isolate grid *:col-start-1 *:row-start-1">
+  <AnimatePresence initial={false}>
+    <m.img
+      key={src}
+      src={src}
+      alt={alt}
+      className="mix-blend-plus-lighter"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={ITEM_ENTER} // in and out on the same tween, so a + (1 − a) = 1 every frame
+    />
+  </AnimatePresence>
+</div>
+```
 
 
 ---
@@ -452,6 +474,45 @@ An invalid field's rim also eases (300 ms in-out) and a ring ripples out once:
 }
 ```
 
+A failed submit also shakes each wrong field, **slightly** and once (decided 2026-11-13: "shake it
+slightly"). It moves a few pixels and dies out in about a third of a second, about half the
+amplitude of the usual error shake.
+
+- **When it shakes.** Only on submit, when the browser-side check finds wrong fields.
+- **When it doesn't.** Never on blur or while typing. Never on a server or network error: those
+  go above the buttons and leave the fields alone ([forms](../../../guidelines/ui-ux/forms.md)).
+- **Reduced motion.** No shake. The rim, the message and the focus on the first wrong field
+  still say it.
+
+```ts
+// src/lib/shake.ts — WAAPI, so every call replays from the start without toggling a class.
+/** −5, 4, −3, 2, −1 px, dying out over 320 ms; added on top of any translate the element has. */
+const SHAKE: Keyframe[] = [0, -5, 4, -3, 2, -1, 0].map((x) => ({ translate: `${x}px 0` }));
+
+export function shake(el: Element | null | undefined) {
+  if (!el || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  el.animate(SHAKE, { duration: 320, easing: "ease-out", composite: "add" });
+}
+```
+
+```tsx
+// In a react-hook-form form: the second handleSubmit callback receives the fields that failed.
+// RHF keeps each field's element as `error.ref` (registered inputs, and Controller fields whose
+// component passes `field.ref` on to its element) and focuses the first one itself.
+import type { FieldErrors } from "react-hook-form";
+import { shake } from "@/lib/shake";
+
+function shakeInvalid(errors: FieldErrors) {
+  for (const error of Object.values(errors)) {
+    const el = error?.ref;
+    // A control inside a drawn box (an input group): shake the box, not the input inside it.
+    if (el instanceof Element) shake(el.closest("[data-slot=input-group]") ?? el);
+  }
+}
+
+<form onSubmit={form.handleSubmit(onValid, shakeInvalid)}>
+```
+
 **Pitfalls/fixes (all measured):**
 - Spacing by the parent's `gap` or a margin jumps in before the height grows and out after it shrinks: pad inside.
 - What must glide while the box eases (a form's buttons, a glow) stands after the box, not in it:
@@ -628,13 +689,23 @@ the new item's mounts with the same `layoutId`, Motion slides it. Plain `{cond ?
 **no `AnimatePresence`, no `initial`/`exit`** on it (they replay on every move); `initial={false}`
 is the one safe form. Presence (grow in from nothing / shrink out) lives in shared MotionValues.
 
+The mark follows the keyboard faster than the pointer (decided 2026-11-13). Arrow keys and Tab
+move it on `KEY_SLIDE`: most of the way in about 100 ms and settled by about 180 ms (the pointer's
+`SLIDE` takes 350 ms), with no overshoot or stretch, so it keeps up with the focus. A key held
+down (`event.repeat`) repeats every 30–90 ms, depending on the system setting, which is faster
+than any slide, so those moves place the mark at once. Pointer moves keep `SLIDE`.
+
 ```tsx
 "use client";
 import { animate, type MotionValue, type Transition, useMotionValue } from "motion/react";
 import * as m from "motion/react-m";
-import { type FocusEvent, useEffect, useId, useState } from "react";
+import { type FocusEvent, type KeyboardEvent, useEffect, useId, useRef, useState } from "react";
 
 const SLIDE: Transition = { type: "spring", bounce: 0.2, duration: 0.35 };
+/** Keyboard moves: critically damped (ratio 1.0, response ≈ 0.17 s), most of the way in ~100 ms. */
+const KEY_SLIDE: Transition = { type: "spring", stiffness: 1400, damping: 75 };
+/** A held-down key: placed at once. */
+const PLACE: Transition = { duration: 0 };
 const STRETCH: Transition = { type: "spring", stiffness: 600, damping: 30 };
 const MOVING_STRETCH = 1.04;
 const MOVING_SQUASH = 0.97;
@@ -648,12 +719,18 @@ export function SelectionIndicator({
   layoutId,
   opacity,
   scale,
+  slide = SLIDE,
+  stretch = true,
   axis = "x",
   className,
 }: {
   layoutId: string;
   opacity: MotionValue<number>;
   scale: MotionValue<number>;
+  /** How it travels to this item: `useHighlight` picks pointer, keyboard or held-key timing. */
+  slide?: Transition;
+  /** Stretch along the way; off for keyboard moves, which are too quick to show it. */
+  stretch?: boolean;
   axis?: "x" | "y";
   className: string;
 }) {
@@ -675,17 +752,24 @@ export function SelectionIndicator({
           ? { scaleX: moving ? MOVING_STRETCH : 1, scaleY: moving ? MOVING_SQUASH : 1 }
           : { scaleX: moving ? MOVING_SQUASH : 1, scaleY: moving ? MOVING_STRETCH : 1 }
       }
-      transition={{ layout: SLIDE, scaleX: STRETCH, scaleY: STRETCH }}
-      onLayoutAnimationStart={() => setMoving(true)}
+      transition={{ layout: slide, scaleX: STRETCH, scaleY: STRETCH }}
+      onLayoutAnimationStart={() => setMoving(stretch)}
       onLayoutAnimationComplete={() => setMoving(false)}
     />
   );
 }
 
+type Via = "pointer" | "key" | "held";
+const SLIDES: Record<Via, Transition> = { pointer: SLIDE, key: KEY_SLIDE, held: PLACE };
+
 /** Follows pointer and focus, rests on `restKey` (current page) or grows in/shrinks out without one. */
 export function useHighlight(restKey: string | null) {
   const baseId = useId(); // unique per group, or marks fly between unrelated menus
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
+  // What moved it last. The key is noted in the capture phase: the menu's own handler moves focus
+  // (firing onFocus) before the keydown would bubble up to the group.
+  const [via, setVia] = useState<Via>("pointer");
+  const pendingKey = useRef<Via | null>(null);
   // Two ids alternate: a mark that faded away grows in fresh instead of flying over.
   const [parity, setParity] = useState(0);
   const shownKey = hoveredKey ?? restKey;
@@ -701,22 +785,35 @@ export function useHighlight(restKey: string | null) {
     animate(scale, shown ? 1 : HIDDEN_SCALE, shown ? ENTER.scale : EXIT.scale);
   }, [shown, opacity, scale]);
 
-  const highlight = (key: string) => {
+  const highlight = (key: string, by: Via) => {
     if (!shown && indicatorKey !== key && opacity.get() < SLIDE_BACK_MIN_OPACITY) setParity((p) => 1 - p);
+    setVia(by);
     setHoveredKey(key);
   };
 
   return {
     indicatorKey,
-    indicatorProps: { layoutId: `${baseId}-${parity}`, opacity, scale },
+    indicatorProps: { layoutId: `${baseId}-${parity}`, opacity, scale, slide: SLIDES[via], stretch: via === "pointer" },
     // Leaving the group clears it; gaps/separators between items don't.
     groupProps: {
       onPointerLeave: () => setHoveredKey(null),
       onBlur: (event: FocusEvent<HTMLElement>) => {
         if (!event.currentTarget.contains(event.relatedTarget)) setHoveredKey(null);
       },
+      onKeyDownCapture: (event: KeyboardEvent<HTMLElement>) => {
+        pendingKey.current = event.repeat ? "held" : "key";
+      },
+      onPointerDownCapture: () => {
+        pendingKey.current = null; // a click that focuses an item is a pointer move
+      },
     },
-    itemProps: (key: string) => ({ onPointerEnter: () => highlight(key), onFocus: () => highlight(key) }),
+    itemProps: (key: string) => ({
+      onPointerEnter: () => highlight(key, "pointer"),
+      onFocus: () => {
+        highlight(key, pendingKey.current ?? "pointer");
+        pendingKey.current = null;
+      },
+    }),
   };
 }
 
@@ -791,6 +888,12 @@ export function SegmentedControl<T extends string>({ options, value, onChange, l
   ("looks horrible for a split second").
 - A grid of columns gets one mark per column, or it flies across diagonally.
 - Hovering an item inside a radio-segment row should clear the menu's hover mark so two never show.
+- Noting the key in `onKeyDown` (bubble phase) is too late: the menu moves focus in its own
+  handler, so `onFocus` fires first and the move is taken for a pointer move. Use
+  `onKeyDownCapture`. A keyboard move uses the transition of the mark that mounts, so `slide` must
+  be decided in the same render as the new `indicatorKey`, which is why `via` is state, not a ref.
+- Not yet looked at by the user: check `KEY_SLIDE` on the lab page by holding and tapping arrow
+  keys through a long menu.
 
 **Liquid alternative (`SelectionBead`)** — used in the newest app: a positioned span whose four
 edges run on hand-stepped springs (leading edge `BEAD.lead` 620/36, trailing `BEAD.trail` 280/24),
@@ -820,6 +923,13 @@ export function spring(s: Sprung, target: number, elapsed: number, { stiffness, 
 **When:** an item changes column/group after an action (kanban move via menu or drop) and must
 travel from where it was.
 
+A card that moves on both axes (to another column *and* another row) travels on a **slight arc**
+(decided 2026-11-13: "slightly"). The arc bulges upward by 8% of the distance, at most 32 px,
+peaks halfway and is gone by the time the card lands. A straight diagonal reads as mechanical,
+while a strong arc reads as a throw, which a dashboard card isn't. Single-axis moves stay
+straight. The lift runs on an inner element, so it never fights the outer element's FLIP offset
+or drag on the same `y` (principle 6). It isn't tuned yet: start from these values on the lab page.
+
 ```tsx
 // Board: record where a card left from, then let the card that lands fly from there on LIFT.
 const FlightsContext = createContext<RefObject<Map<string, { from: DOMRect; scale: number }>> | null>(null);
@@ -834,25 +944,42 @@ function Board({ items, move }: { items: Item[]; move: (id: string, to: string) 
   return <FlightsContext.Provider value={flights}>{/* columns render <Card onMove={moveCard} /> */}</FlightsContext.Provider>;
 }
 
+/** A slight arc: only when both axes move more than ARC_MIN px; 8% of the distance, ≤ 32 px. */
+const ARC_MIN = 40;
+const ARC_BULGE = 0.08;
+const ARC_MAX = 32;
+const arcPeak = (dx: number, dy: number) =>
+  Math.abs(dx) > ARC_MIN && Math.abs(dy) > ARC_MIN ? Math.min(Math.hypot(dx, dy) * ARC_BULGE, ARC_MAX) : 0;
+
 function Card({ item }: { item: Item }) {
   const flights = useContext(FlightsContext);
   const ref = useRef<HTMLDivElement>(null);
+  const reduced = useReducedMotion();
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const scale = useMotionValue(1);
+  const arc = useMotionValue(0); // px above the straight line, on the inner element
   useLayoutEffect(() => {
     const flight = flights?.current.get(item.id);
     const el = ref.current;
     if (!flights || !flight || !el) return;
     flights.current.delete(item.id);
     const to = el.getBoundingClientRect();
-    x.jump(flight.from.left + flight.from.width / 2 - (to.left + to.width / 2));
-    y.jump(flight.from.top + flight.from.height / 2 - (to.top + to.height / 2));
+    const dx = flight.from.left + flight.from.width / 2 - (to.left + to.width / 2);
+    const dy = flight.from.top + flight.from.height / 2 - (to.top + to.height / 2);
+    x.jump(dx);
+    y.jump(dy);
     scale.jump(flight.scale);
     animate(x, 0, LIFT);
     animate(y, 0, LIFT);
     animate(scale, 1, LIFT);
-  }, [flights, item.id, item.group, x, y, scale]);
+    const peak = reduced ? 0 : arcPeak(dx, dy);
+    if (peak > 0) {
+      // Same spring as x/y, so the bulge peaks halfway along the path. Clamped: LIFT's overshoot
+      // past the target must not dip the card below the line.
+      animate(0, 1, { ...LIFT, onUpdate: (t) => arc.set(-Math.sin(Math.PI * Math.min(1, Math.max(0, t))) * peak) });
+    }
+  }, [flights, item.id, item.group, x, y, scale, arc, reduced]);
   return (
     <m.div
       ref={ref}
@@ -865,7 +992,7 @@ function Card({ item }: { item: Item }) {
       dragMomentum={false}
       whileDrag={{ scale: 1.03, zIndex: 30, cursor: "grabbing" }}
     >
-      {/* card */}
+      <m.div style={{ y: arc }}>{/* card */}</m.div>
     </m.div>
   );
 }
@@ -1787,7 +1914,10 @@ and the release lands outside → extend its `::after` past the row; `-webkit-ta
 transparent` on anything with its own press; hover in custom CSS behind `@media (hover: hover)`;
 only the element under the pointer answers (no neighbour glow on a dashboard); a hover light written
 into custom properties on enter/move, nothing re-renders. Mark `cursor: pointer` on everything
-clickable.
+clickable. A hover that moves the hovered element itself (a lift, a nudge) can carry it out from
+under a pointer resting near its edge: hover drops, it moves back, hover fires again, and it
+flickers. Keep the hovered element still and move a child: `group-hover:` on the inner layer, the
+hit area on the outer one.
 
 
 ---
@@ -1929,6 +2059,16 @@ Older Motion-driven alternative (first dashboard app): `AnimatePresence` around 
 `transformOrigin: var(--transform-origin)`; a controlled close turned into `actionsRef.current.close()`
 from an effect (else it unmounts before Motion's first frame).
 
+Tooltips: the first one waits for its hover delay and grows in with `overlay-appear`. While one is
+open, moving to a neighbour shows the next at once, with no delay and no animation, or a row of
+icon buttons makes every tooltip wait and replay its entrance. Base UI marks those with
+`data-instant` (Tooltip.Provider's shared delay handles the timing):
+
+```css
+/* Inside overlay-appear: a tooltip shown instantly (moved to from a neighbour) doesn't animate. */
+&[data-instant] { transition-duration: 0ms; }
+```
+
 **Pitfalls:** an overlay rebuilt (remounted) on each opening popped in with no animation; overlays
 must stay mounted; a guard e2e test opens a dialog twice and polls `getAnimations()` for a running
 `scale`/`translate` transition; Escape inside a nested list closes only the list; a hover-open menu
@@ -1941,11 +2081,220 @@ right sheet with `data-[side=right]:sm:max-w-lg`.
 
 ## P15. Toasts
 
-No custom toast motion exists in the repos: the first dashboard app uses `sonner` with its defaults; the newest dashboard app, the
-websites and the template have no toasts. The only lesson: never remove a toast library's DOM nodes
-in tests (React owns them). Apply the general rules if building one: enter on LIFT (rise + fade),
-exit as a fast tween, stacked toasts reflow on `ITEM_REORDER`, a status change inside one goes through
-`ContentSwap`. See OPEN.
+**When:** a short message about something that happened away from where the person is looking:
+saved in the background, sent, failed and retryable, and above all **Undo** after a reversible
+action ([feedback-and-states](../../../guidelines/ui-ux/feedback-and-states.md)). A message about
+a field or a form belongs beside it, never in a toast as well.
+
+**Provenance.** No toast motion was tuned in the user's projects. The first dashboard app used
+`sonner` with its defaults, and the newer apps and sites have no toasts. The pattern below
+assembles our own rules on Base UI's Toast (the component kit, so it's the default):
+
+- rise and fade in on `LIFT`;
+- leave on a quick fade with no bounce;
+- the stack shifts on `ITEM_REORDER`;
+- swipes follow the finger 1:1;
+- a status change inside a toast goes through `ContentSwap`.
+
+The idea of a longer life for action toasts comes from an outside motion skill (2026-11, see
+README). None of the values below have been looked at by the user yet, so show them on the lab
+page.
+
+| | Value |
+| --- | --- |
+| enter | rise 1 rem from the screen edge on `LIFT`, fade `--fade-in` |
+| exit | fade `--fade-out`, drift 0.5 rem back toward the edge on `ITEM_REORDER` (no bounce) |
+| swiped away | keeps going the way it was swiped, while it fades |
+| stack | the toasts behind peek 0.75 rem and scale down 5% each; hover or focus fans them out; every shift on `ITEM_REORDER` |
+| lifetime | 5 s; 8 s with an action (Undo, Retry); paused while hovered, focused or the window is in the background (Base UI does this) |
+| at most | 3 on screen; older ones fade out behind (Base UI's `limit`, `data-limited`) |
+
+```tsx
+// src/providers/toasts.tsx — mounted once in the root layout, inside MotionProvider.
+"use client";
+import { Toast } from "@base-ui/react/toast";
+import { X } from "lucide-react";
+import type { ReactNode } from "react";
+import { ContentSwap } from "@/components/content-swap";
+
+export const TOAST_TIMEOUT = 5000;
+/** Long enough to read the message and reach the button. */
+export const ACTION_TOAST_TIMEOUT = 8000;
+
+export function ToastProvider({ children }: { children: ReactNode }) {
+  return (
+    <Toast.Provider timeout={TOAST_TIMEOUT} limit={3}>
+      {children}
+      <Toast.Portal>
+        <Toast.Viewport className="toast-viewport">
+          <ToastList />
+        </Toast.Viewport>
+      </Toast.Portal>
+    </Toast.Provider>
+  );
+}
+
+function ToastList() {
+  const { toasts } = Toast.useToastManager();
+  return toasts.map((toast) => (
+    <Toast.Root key={toast.id} toast={toast} className="toast" swipeDirection={["down", "right"]}>
+      <Toast.Content className="toast-content flex items-center gap-3 p-3">
+        <div className="min-w-0 flex-1">
+          {/* "Saving…" → "Saved" (toastManager.promise / update) swaps instead of snapping. */}
+          <Toast.Title className="text-sm font-medium">
+            <ContentSwap swapKey={String(toast.title ?? "")}>{toast.title}</ContentSwap>
+          </Toast.Title>
+          <Toast.Description className="text-sm text-muted-foreground" />
+        </div>
+        <Toast.Action className="shrink-0" />
+        <Toast.Close aria-label="Close" className="shrink-0">
+          <X className="size-4" />
+        </Toast.Close>
+      </Toast.Content>
+    </Toast.Root>
+  ));
+}
+```
+
+```css
+/* src/app/motion.css — the stack is Base UI's (--toast-index, --toast-offset-y, swipe movement);
+   the motion is ours. The rise uses `translate`, the stack uses `transform`: two properties, so the
+   entrance spring and the stack shift never drive the same one. */
+@utility toast-viewport {
+  position: fixed;
+  z-index: 60;
+  inset: auto 1rem 1rem auto;
+  width: calc(100vw - 2rem);
+  @media (min-width: 40rem) { inset: auto 1.5rem 1.5rem auto; width: 22.5rem; }
+}
+
+@utility toast {
+  --gap: 0.75rem;
+  --peek: 0.75rem;
+  --scale: max(0, 1 - var(--toast-index) * 0.05);
+  --height: var(--toast-frontmost-height, var(--toast-height));
+  --offset-y: calc(var(--toast-offset-y) * -1 - var(--toast-index) * var(--gap) + var(--toast-swipe-movement-y));
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: var(--height);
+  z-index: calc(1000 - var(--toast-index));
+  transform-origin: bottom center;
+  user-select: none;
+  transform:
+    translateX(var(--toast-swipe-movement-x))
+    translateY(calc(var(--toast-swipe-movement-y) - var(--toast-index) * var(--peek) - (1 - var(--scale)) * var(--height)))
+    scale(var(--scale));
+  /* Height is the one layout property here: a toast is absolutely positioned, so it reflows
+     nothing. It lets the toasts behind take the front one's height while stacked. */
+  transition:
+    opacity var(--fade-in) ease-out,
+    translate var(--spring-lift-duration) var(--spring-lift),
+    transform var(--spring-reorder-duration) var(--spring-reorder),
+    height var(--spring-reorder-duration) var(--spring-reorder);
+
+  &[data-expanded] {
+    transform: translateX(var(--toast-swipe-movement-x)) translateY(var(--offset-y));
+    height: var(--toast-height);
+  }
+  /* A swipe follows the finger 1:1: no transition on the transform while it's held. */
+  &[data-swiping] { transition: opacity var(--fade-in) ease-out; }
+  /* A hit strip over the gap, so moving between fanned-out toasts doesn't collapse them. */
+  &::after { content: ""; position: absolute; top: 100%; left: 0; width: 100%; height: calc(var(--gap) + 1px); }
+
+  &[data-starting-style] { opacity: 0; translate: 0 1rem; }
+  &[data-limited] { opacity: 0; }
+  &[data-ending-style] {
+    opacity: 0;
+    translate: 0 0.5rem;
+    transition:
+      opacity var(--fade-out) ease-out,
+      translate var(--spring-reorder-duration) var(--spring-reorder),
+      transform var(--spring-reorder-duration) var(--spring-reorder);
+  }
+  /* Swiped away: it keeps going where it was thrown (the transform still holds the swipe). */
+  &[data-ending-style][data-swipe-direction="right"] { translate: 110% 0; }
+  &[data-ending-style][data-swipe-direction="down"] { translate: 0 110%; }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: opacity var(--fade-in) ease-out;
+    &[data-starting-style], &[data-ending-style] { translate: none; }
+  }
+}
+
+@utility toast-content {
+  transition: opacity var(--fade-in) ease-out;
+  &[data-behind] { opacity: 0; }      /* only the front toast's text shows while stacked */
+  &[data-expanded] { opacity: 1; }
+}
+```
+
+Undo after a reversible action. The item leaves the screen at once, and the request goes out only
+when the toast closes without Undo (timeout, close, swipe) or when the page is hidden. So Undo
+just puts the item back, and nothing has to be reversed on the server:
+
+```tsx
+// src/hooks/use-undoable.ts
+"use client";
+import { Toast } from "@base-ui/react/toast";
+import { ACTION_TOAST_TIMEOUT } from "@/providers/toasts";
+
+type Undoable = {
+  title: string;          // "Archived 3 items" (from the label module)
+  undoLabel: string;      // "Undo"
+  failedTitle: string;    // "Couldn't archive the items"
+  apply: () => void;      // remove from the UI now (optimistic state)
+  revert: () => void;     // put it back
+  commit: () => Promise<unknown>; // the real request
+};
+
+export function useUndoable() {
+  const toasts = Toast.useToastManager();
+  return ({ title, undoLabel, failedTitle, apply, revert, commit }: Undoable) => {
+    apply();
+    let settled = false;
+    const send = () => {
+      if (settled) return;
+      settled = true;
+      document.removeEventListener("visibilitychange", onHidden);
+      commit().catch(() => {
+        revert();
+        toasts.add({ title: failedTitle, type: "error" });
+      });
+    };
+    const onHidden = () => {
+      if (document.visibilityState === "hidden") send();
+    };
+    document.addEventListener("visibilitychange", onHidden);
+    const id = toasts.add({
+      title,
+      timeout: ACTION_TOAST_TIMEOUT,
+      onClose: send, // timeout, close button or swipe: the action stands
+      actionProps: {
+        children: undoLabel,
+        onClick: () => {
+          settled = true;
+          document.removeEventListener("visibilitychange", onHidden);
+          revert();
+          toasts.close(id); // onClose runs, but `settled` stops the request
+        },
+      },
+    });
+  };
+}
+```
+
+**Pitfalls:**
+- Never remove a toast library's DOM nodes in tests: React owns them.
+- A request started while the tab is closing can be cut off. When `commit` must survive a closed
+  tab, send it with `fetch(url, { method: "POST", keepalive: true })` from the
+  `visibilitychange` path, not a server action.
+- A toast is never the only place an error shows. Field and form errors stay where they happened
+  ([forms](../../../guidelines/ui-ux/forms.md)), and a toast about them would say the same thing
+  twice.
+- Swipe directions match the viewport's corner (bottom-right: down and right). A toast swiped
+  toward the middle of the screen reads as a drag gone wrong.
 
 
 ---
@@ -1989,6 +2338,43 @@ reads as a glitch), its check pops, the line fills, the current step lights and 
 start after the part has risen; on change start right away. A step swap scrolls back to the top with
 the height ease. A goal reached in view replays its moment by keying on a counter of reachings
 (`useReached`). What's already done on load is simply there.
+
+A sequence of three or more stages is written as a **storyboard**: a comment that reads like a
+script, one `TIMING` object that matches it, and one config object per element, so the JSX holds no
+bare numbers and the user's "the check comes too late" is a one-line change:
+
+```tsx
+/* ─────────────────────────────────────────────
+ * STORYBOARD: step finished (ms after the trigger)
+ *
+ *    0   step fills from its middle (ITEM_REORDER)
+ *  160   check pops (SPRING_IN)
+ *  320   line to the next step fills
+ *  480   next step lights, ripples once
+ * ───────────────────────────────────────────── */
+const TIMING = { fill: 0, check: 160, line: 320, next: 480 } as const;
+
+const FILL = { from: 0, transition: ITEM_REORDER };
+const CHECK = { from: 0.6, transition: SPRING_IN };
+const RIPPLE = { to: 1.7, duration: 0.5 };
+
+const STAGES = Object.keys(TIMING).length;
+
+// One stage counter, compared with >=, so stages add up; `replay` re-runs it on the lab page.
+const reduced = useReducedMotion();
+const [stage, setStage] = useState(0);
+useEffect(() => {
+  if (reduced) return setStage(STAGES); // reduced motion: the finished state (P18)
+  setStage(0);
+  const timers = Object.values(TIMING).map((at, i) => setTimeout(() => setStage(i + 1), at));
+  return () => timers.forEach(clearTimeout);
+}, [replay, reduced]);
+// <m.span animate={{ scale: stage >= 2 ? 1 : CHECK.from }} transition={CHECK.transition} />
+```
+
+- Times count from the trigger, not from the stage before, so moving one stage doesn't shift the
+  others.
+- The comment and `TIMING` change together; a reviewer reads the comment, the code reads `TIMING`.
 
 
 ---

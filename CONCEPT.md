@@ -194,6 +194,11 @@ guidelines/
   `SHOULD`, `CONSIDER`), date and generic project type; the rule; why;
   optionally an example and a "changed" note. See
   [templates/GUIDELINE.md](templates/GUIDELINE.md).
+- **Where an entry comes from.** Nearly every entry comes from the user's own
+  projects. Established laws of UX (Fitts, Hick, Miller, Postel and so on)
+  may be added as well (since 2026-11-13). Their source line says
+  "established UX law", they are at most `SHOULD`, and the user's own rules
+  win wherever the two disagree.
 - **Guidelines link to skills instead of duplicating them.** When a topic
   needs pages of code or a procedure, that's a skill, and the guideline
   entry points to it.

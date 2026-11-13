@@ -3,8 +3,9 @@
 Short, enforceable rules, grouped into the playbook's categories. Where
 `skills/` holds deep, invocable procedures and patterns with full code,
 `guidelines/` holds the rules an agent should know before touching a
-project. Most entries come out of the user's corrections and decisions. The
-navigation and reading order are in [INDEX.md](../INDEX.md).
+project. Most entries come out of the user's corrections and decisions; a
+few restate established laws of UX and say so. The navigation and reading
+order are in [INDEX.md](../INDEX.md).
 
 | # | Category | Folder |
 | --- | --- | --- |
@@ -35,6 +36,11 @@ Every entry follows [templates/GUIDELINE.md](../templates/GUIDELINE.md):
   - `CONSIDER` is situational.
   - The project type is generic ("dashboard app", "client site"), never a
     name; this repository is public.
+  - "Established UX law" stands in for the project type when a rule comes
+    from published UX research (Fitts, Hick, Miller, Postel and so on)
+    rather than from the user's projects (added 2026-11-13). Those entries
+    are at most `SHOULD`, name the law in **Why**, and yield to the user's
+    own rules.
 - **The rule.** Then **Why**, an example where it helps, **Changed** when
   the preference moved over time (the newest wins), and **See also**.
 

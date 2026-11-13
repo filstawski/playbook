@@ -72,6 +72,22 @@ heights before and after.
 **Why:** asked twice on consecutive days: "too bulky, too clumpy, too big
 elements. Go down further."
 
+## Gaps between groups are at least twice the gaps inside them
+
+**SHOULD** · 2026-11 · established UX law
+
+Things that belong together sit closer to each other than to anything
+else. On the 4/8 px grid, the gap between groups is at least twice the gap
+inside one (8 inside, 16–24 between), and a label sits closer to its own
+field than to the field above. Before adding a divider, border or card to
+show structure, check whether spacing already shows it. If it does, leave
+the line out.
+
+**Why:** the law of proximity. People read distance as relationship before
+they read a word, so equal gaps make a form or a settings page look like one
+undivided list. It also fits the house style's faint lines and quiet
+decoration ([depth-and-materials](depth-and-materials.md#decoration-is-quiet-and-differs-in-kind-from-structure)).
+
 ## One primary button per section
 
 **MUST** · 2026-10 · dashboard apps
