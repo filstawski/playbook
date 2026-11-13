@@ -58,7 +58,9 @@ primitive rather than the screen that showed the bug. Read
    600 ms, so a fast response doesn't flash.
 9. **One selection mark slides.** A selection or hover mark moves between
    items as one object; it never disappears and reappears. Rows to choose
-   from use the shared mark, not a plain hover background.
+   from use the shared mark, not a plain hover background. When the keyboard
+   moves it, it slides much faster and without overshoot, and a held-down
+   key places it at once, so it never trails the focus.
 10. **The first paint is already right.** What arrives with the page
     animates in CSS from the server's HTML; nothing above the fold waits for
     JavaScript or sits at opacity 0 until hydration. Things that arrive on
@@ -160,10 +162,10 @@ acceptable.
 | --- | --- |
 | Setting up a project | [P0 Foundation](patterns.md#p0-foundation-tokens-css-twins-provider) |
 | A label, status or block is replaced | [P1 ContentSwap](patterns.md#p1-presence-enterexit-and-content-swaps-contentswap) |
-| Content opens/closes, a box's content changes size, a field error appears | [P2 Collapse / AnimateDimensions / FieldError](patterns.md#p2-heightwidth-auto-collapse-animatedimensions-fielderror) |
+| Content opens/closes, a box's content changes size, a field error appears, a failed submit shakes the field | [P2 Collapse / AnimateDimensions / FieldError](patterns.md#p2-heightwidth-auto-collapse-animatedimensions-fielderror) |
 | A button's label or icon changes, a busy state | [P3 StableSwap / BusyIcon](patterns.md#p3-stable-swaps-and-busy-buttons-stableswap-busyicon-useheld) |
 | Tabs, segmented controls, selection and hover marks | [P4 layoutId indicator](patterns.md#p4-shared-element-morph-via-layoutid-selectionhover-indicator-tab--segmented-pill) |
-| A card moves to another column | [P5 FLIP flight](patterns.md#p5-card-moving-between-containers-manual-flip-flight-and-list-reorder) |
+| A card moves to another column (on a slight arc) | [P5 FLIP flight](patterns.md#p5-card-moving-between-containers-manual-flip-flight-and-list-reorder) |
 | Items are added, removed or reordered | [P6 List motion](patterns.md#p6-list-add--remove--reorder) |
 | Route or tab changes in an app | [P7 View Transitions (app)](patterns.md#p7-view-transitions-for-routetab-changes-in-an-app-content-only-page-turn) |
 | Page changes on a marketing site, theme switch | [P8 View Transitions (site)](patterns.md#p8-page-transitions-on-a-marketing-site--cross-document-fallback-theme-switch) |
@@ -173,7 +175,7 @@ acceptable.
 | Progress bars, parallax, sticky stages tied to scroll | [P12 Scroll-linked](patterns.md#p12-scroll-linked-progress-parallax-and-sticky-stages) |
 | Hover and press, icon motion | [P13 Hover and press](patterns.md#p13-hover-and-press-feedback) |
 | Dialogs, sheets, menus, popovers, flyouts | [P14 Overlays](patterns.md#p14-dialogs-sheets-menus-popovers-flyouts) |
-| Toasts | [P15 Toasts](patterns.md#p15-toasts) |
+| Toasts, Undo after a reversible action | [P15 Toasts](patterns.md#p15-toasts) |
 | Multi-step progress, drawn checks, arrival choreography | [P16 Beats](patterns.md#p16-progress-in-beats-drawn-checks-arrival-choreography) |
 | Ambient loops (AI surfaces, signature effects) | [P17 Ambient](patterns.md#p17-ambient--continuous-motion-only-where-asked) |
 | Reduced motion, reduced transparency, more contrast | [P18](patterns.md#p18-reduced-motion-summary-across-patterns) |
@@ -240,6 +242,11 @@ website in two generations, and several client sites, September–November
 - **The liquid "bead" selection mark** (hand-stepped leading and trailing
   edges) is an approved option in one app; the simpler `layoutId` indicator
   is the default.
+- **Added 2026-11-13, decided but not yet tuned.** The user decided four
+  things without seeing them yet: the faster keyboard slide (P4), the slight
+  arc (P5), the slight error shake (P2) and the toast pattern (P15). Their
+  numbers are starting values. Show them on the lab page and let the user
+  settle them, as with gesture physics.
 
 ## See also
 

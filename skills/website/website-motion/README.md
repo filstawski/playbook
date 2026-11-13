@@ -29,6 +29,25 @@ This README is provenance for maintainers; agents read `SKILL.md`.
   and the caution about large slow loops in P17. The projection and
   rubber-band formulas were checked against Apple's sample code before
   adoption. None of it has been tuned by the user yet.
+- **[charles-ux-animation](https://github.com/LemonFace0309/charles-skills/tree/main/skills/charles-ux-animation)**
+  by Charles Liu, compared on 2026-11-13. It credits Emil Kowalski's
+  animations.dev, Josh Puckett's Interface Craft, Raphael Salaja's
+  userinterface.wiki and Jon Yablonski's Laws of UX. The repository has
+  **no licence**, so nothing was copied. Only ideas were taken, written in our
+  own words, with our own code and values:
+  - the toast pattern's longer life for action toasts and the Undo flow
+    that sends the request only when the toast closes (P15);
+  - neighbouring tooltips opening instantly (P14);
+  - keyboard moves not trailing the keys, which the user turned into a
+    faster slide rather than a jump (P4);
+  - the arc for moves on both axes, made slight (P5);
+  - the error shake, made slight (P2);
+  - the hover flicker fix (P13);
+  - the `plus-lighter` image cross-fade (P1);
+  - storyboards (P16).
+
+  Its laws of UX went into the guidelines instead, marked as established
+  UX laws (forms, feedback and states, interaction, layout).
 - **No other third-party skill text.** Some general principles also appear in
   `make-interfaces-feel-better` by Jakub Krehel (MIT, see
   [design-interface-polish](../../design/design-interface-polish/README.md)):
@@ -62,6 +81,23 @@ From apple-design, these were left out or changed on purpose:
 - **Motion blur for fast motion, typography, the eight design principles
   and process:** out of scope for a motion skill or not yet seen in the
   user's projects. Typography and principles belong to the design skills.
+
+From charles-ux-animation, these were left out on purpose:
+
+- **Cubic-bezier tweens with no bounce in product UI, and its modal,
+  drawer and popover timings:** these contradict the user's spring
+  vocabulary, for the same reason as apple-design's critically damped
+  defaults.
+- **No transition for anything used many times a session:** "nothing
+  teleports" stands. Dashboards run 30% quieter instead, and only the
+  keyboard case changed (P4).
+- **Reduced motion turning fades off too:** ours keeps fades and drops travel
+  (principle 14).
+- **A spinner shown only after 300 ms:** busy feedback shows at once and is
+  held for 600 ms (P3); that rule came from the user.
+- **Squash and stretch, anticipation, follow-through, 3D flips and compound
+  loops** as general rules: not seen in the user's projects. The selection
+  mark's stretch (P4) and the ambient rules (P17) cover what is used.
 
 ## Licence notice
 
