@@ -42,4 +42,11 @@ Strength:
 Source line: approximate date (month is enough) and a generic project
 type. Never a project, client, or company name, a domain, or a URL — this
 repository is public.
+
+A rule taken from published UX research rather than from the user's
+projects says "established UX law" instead of a project type, names the law
+in **Why:**, and is never stronger than SHOULD. Where it disagrees with a
+rule from the user's projects, the user's rule wins; say so in the entry.
+A user decision that hasn't come up in a project yet adds
+"(decided YYYY-MM-DD)" after the project type.
 -->
